@@ -2,9 +2,5 @@
     "rust-analyzer.linkedProjects": [
         "./zephyr/Cargo.toml",
         "./contracts/Cargo.toml",
-        "./contracts/example-contract/Cargo.toml",
-        "./contracts/sample-policy/Cargo.toml",
-        "./contracts/smart-wallet-factory/Cargo.toml",
-        "./contracts/smart-wallet/Cargo.toml",
     ]
 }

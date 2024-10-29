@@ -1,4 +1,6 @@
-use soroban_sdk::{contracterror, contracttype, Address, Bytes, BytesN, Map, Vec};
+use soroban_sdk::{
+    auth::Context as AuthContext, contracterror, contracttype, Address, Bytes, BytesN, Map, Vec,
+};
 
 #[contracterror(export = false)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -72,3 +74,10 @@ pub enum Signature {
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Signatures(pub Map<SignerKey, Option<Signature>>);
+
+#[contracttype(export = false)]
+#[derive(Clone)]
+pub enum Context {
+    Base(Vec<AuthContext>),
+    Limit(AuthContext),
+}

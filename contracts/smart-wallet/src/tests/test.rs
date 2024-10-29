@@ -11,7 +11,9 @@ use smart_wallet_interface::types::{
     Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
 };
 use soroban_sdk::{
-    map, token, vec,
+    map,
+    testutils::EnvTestConfig,
+    token, vec,
     xdr::{
         HashIdPreimage, HashIdPreimageSorobanAuthorization, InvokeContractArgs, Limits,
         SorobanAddressCredentials, SorobanAuthorizationEntry, SorobanAuthorizedFunction,
@@ -23,7 +25,12 @@ use stellar_strkey::{ed25519, Strkey};
 
 #[test]
 fn test() {
-    let env: Env = Env::default();
+    let mut env: Env = Env::default();
+
+    env.set_config(EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
+
     let signature_expiration_ledger = env.ledger().sequence();
     let amount = 10_000_000i128;
     let evil_amount = 10_000_00i128;

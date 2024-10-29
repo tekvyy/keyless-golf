@@ -148,6 +148,8 @@ impl CustomAccountInterface for Contract {
 
         // Check all signatures for a matching context
         for (signer_key, signature) in signatures.0.iter() {
+            // This is probably the only right place to verify_signer_expiration for crypto keys
+
             match get_signer_val_storage(&env, &signer_key, true) {
                 None => panic_with_error!(env, Error::NotFound),
                 Some((signer_val, _)) => {
@@ -155,8 +157,11 @@ impl CustomAccountInterface for Contract {
                         None => {
                             // If there's a policy signer in the signatures map we call it as a full forward of this __check_auth's Vec<Context>
                             if let SignerKey::Policy(policy) = &signer_key {
-                                PolicyClient::new(&env, policy)
-                                    .policy__(&env.current_contract_address(), &signer_key, &auth_contexts);
+                                PolicyClient::new(&env, policy).policy__(
+                                    &env.current_contract_address(),
+                                    &signer_key,
+                                    &auth_contexts,
+                                );
                                 continue;
                             }
 

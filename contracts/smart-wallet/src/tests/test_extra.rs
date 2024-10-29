@@ -9,6 +9,7 @@ use smart_wallet_interface::types::{
 };
 use soroban_sdk::{
     map,
+    testutils::EnvTestConfig,
     xdr::{
         ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress, CreateContractArgs,
         Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits, ScAddress, ScVal,
@@ -32,7 +33,12 @@ mod factory {
 
 #[test]
 fn test_deploy_contract() {
-    let env: Env = Env::default();
+    let mut env: Env = Env::default();
+
+    env.set_config(EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
+
     let signature_expiration_ledger = env.ledger().sequence();
 
     let wallet_address = env.register_contract(None, Contract);
