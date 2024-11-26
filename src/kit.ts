@@ -91,8 +91,11 @@ export class PasskeyKit extends PasskeyBase {
     }) {
         const now = new Date()
         const displayName = `${user} — ${now.toLocaleString()}`
-        const { rpId, authenticatorSelection } = settings || {}
-        const { id, response } = await this.WebAuthn.startRegistration({
+        const { rpId, authenticatorSelection = {
+            residentKey: "preferred",
+            userVerification: "discouraged",
+        } } = settings || {}
+        const { id, response, ...rest } = await this.WebAuthn.startRegistration({
             optionsJSON: {
                 challenge: base64url("stellaristhebetterblockchain"),
                 rp: {
@@ -106,8 +109,6 @@ export class PasskeyKit extends PasskeyBase {
                 },
                 authenticatorSelection,
                 pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                // attestation: "none",
-                // timeout: 120_000,
             }
         });
 
@@ -134,8 +135,7 @@ export class PasskeyKit extends PasskeyBase {
                 optionsJSON: {
                     challenge: base64url("stellaristhebetterblockchain"),
                     rpId,
-                    // userVerification: "discouraged",
-                    // timeout: 120_000
+                    userVerification: "discouraged",
                 }
             });
 
@@ -277,8 +277,7 @@ export class PasskeyKit extends PasskeyBase {
                     ? {
                         challenge: base64url(payload),
                         rpId,
-                        // userVerification: "discouraged",
-                        // timeout: 120_000
+                        userVerification: "discouraged",
                     }
                     : {
                         challenge: base64url(payload),
@@ -291,8 +290,7 @@ export class PasskeyKit extends PasskeyBase {
                                 type: "public-key",
                             },
                         ],
-                        // userVerification: "discouraged",
-                        // timeout: 120_000
+                        userVerification: "discouraged",
                     }
             });
 
