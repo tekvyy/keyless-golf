@@ -93,9 +93,9 @@ export class PasskeyKit extends PasskeyBase {
         const displayName = `${user} — ${now.toLocaleString()}`
         const { rpId, authenticatorSelection = {
             residentKey: "preferred",
-            userVerification: "discouraged",
+            userVerification: "preferred",
         } } = settings || {}
-        const { id, response, ...rest } = await this.WebAuthn.startRegistration({
+        const { id, response } = await this.WebAuthn.startRegistration({
             optionsJSON: {
                 challenge: base64url("stellaristhebetterblockchain"),
                 rp: {
@@ -135,7 +135,7 @@ export class PasskeyKit extends PasskeyBase {
                 optionsJSON: {
                     challenge: base64url("stellaristhebetterblockchain"),
                     rpId,
-                    userVerification: "discouraged",
+                    userVerification: "preferred",
                 }
             });
 
@@ -277,7 +277,7 @@ export class PasskeyKit extends PasskeyBase {
                     ? {
                         challenge: base64url(payload),
                         rpId,
-                        userVerification: "discouraged",
+                        userVerification: "preferred",
                     }
                     : {
                         challenge: base64url(payload),
@@ -290,7 +290,7 @@ export class PasskeyKit extends PasskeyBase {
                                 type: "public-key",
                             },
                         ],
-                        userVerification: "discouraged",
+                        userVerification: "preferred",
                     }
             });
 
