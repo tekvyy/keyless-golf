@@ -10,7 +10,7 @@ impl Contract {
     pub fn deploy(env: Env, source: Address, wasm_hash: BytesN<32>) {
         env.deployer()
             .with_address(source, wasm_hash.clone())
-            .deploy(wasm_hash);
+            .deploy_v2(wasm_hash, ());
     }
     pub fn call(
         env: Env,

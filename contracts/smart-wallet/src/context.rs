@@ -48,7 +48,7 @@ pub fn verify_context(
                 }
             }
         }
-        Context::CreateContractHostFn(_) => {
+        _ => {
             // Only signers with the smart wallet context signer limit can deploy contracts
             match signer_limits.0.get(env.current_contract_address()) {
                 None => false, // signer limitations not met

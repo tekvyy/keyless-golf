@@ -3,34 +3,18 @@ import {
   AssembledTransaction,
   Client as ContractClient,
   ClientOptions as ContractClientOptions,
-  Result,
+  MethodOptions,
   Spec as ContractSpec,
 } from '@stellar/stellar-sdk/minimal/contract';
 import type {
   u32,
-  i32,
-  u64,
-  i64,
-  u128,
-  i128,
-  u256,
-  i256,
   Option,
-  Typepoint,
-  Duration,
 } from '@stellar/stellar-sdk/minimal/contract';
 
 if (typeof window !== 'undefined') {
   //@ts-ignore Buffer exists
   window.Buffer = window.Buffer || Buffer;
 }
-
-export const networks = {
-  testnet: {
-    networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "NIL",
-  }
-} as const
 
 export const Errors = {
   1: { message: "NotFound" },
@@ -59,7 +43,6 @@ export type SignerVal = { tag: "Policy", values: readonly [Option<u32>, SignerLi
 export type SignerStorage = { tag: "Persistent", values: void } | { tag: "Temporary", values: void };
 
 export type Signer = { tag: "Policy", values: readonly [string, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Ed25519", values: readonly [Buffer, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Secp256r1", values: readonly [Buffer, Buffer, Option<u32>, SignerLimits, SignerStorage] };
-
 
 export interface Secp256r1Signature {
   authenticator_data: Buffer;
@@ -154,6 +137,22 @@ export interface Client {
 
 }
 export class Client extends ContractClient {
+  static async deploy<T = Client>(
+    /** Constructor/Initialization Args for the contract's `__constructor` method */
+    { signer }: { signer: Option<Signer> },
+    /** Options for initalizing a Client as well as for calling a method, with extras specific to deploying. */
+    options: MethodOptions &
+      Omit<ContractClientOptions, "contractId"> & {
+        /** The hash of the Wasm blob, which must already be installed on-chain. */
+        wasmHash: Buffer | string;
+        /** Salt used to generate the contract's ID. Passed through to {@link Operation.createCustomContract}. Default: random. */
+        salt?: Buffer | Uint8Array;
+        /** The format used to decode `wasmHash`, if it's provided as a string. */
+        format?: "hex" | "base64";
+      }
+  ): Promise<AssembledTransaction<T>> {
+    return ContractClient.deploy({ signer }, options)
+  }
   constructor(public readonly options: ContractClientOptions) {
     super(
       new ContractSpec(["AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAACQAAAAAAAAAITm90Rm91bmQAAAABAAAAAAAAAA1BbHJlYWR5RXhpc3RzAAAAAAAAAgAAAAAAAAAOTWlzc2luZ0NvbnRleHQAAAAAAAMAAAAAAAAADVNpZ25lckV4cGlyZWQAAAAAAAAEAAAAAAAAABJGYWlsZWRTaWduZXJMaW1pdHMAAAAAAAUAAAAAAAAAGEZhaWxlZFBvbGljeVNpZ25lckxpbWl0cwAAAAYAAAAAAAAAGVNpZ25hdHVyZUtleVZhbHVlTWlzbWF0Y2gAAAAAAAAHAAAAAAAAACBDbGllbnREYXRhSnNvbkNoYWxsZW5nZUluY29ycmVjdAAAAAgAAAAAAAAADkpzb25QYXJzZUVycm9yAAAAAAAJ",
@@ -165,6 +164,7 @@ export class Client extends ContractClient {
         "AAAAAQAAAAAAAAAAAAAAElNlY3AyNTZyMVNpZ25hdHVyZQAAAAAAAwAAAAAAAAASYXV0aGVudGljYXRvcl9kYXRhAAAAAAAOAAAAAAAAABBjbGllbnRfZGF0YV9qc29uAAAADgAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEA=",
         "AAAAAgAAAAAAAAAAAAAACVNpZ25hdHVyZQAAAAAAAAIAAAABAAAAAAAAAAdFZDI1NTE5AAAAAAEAAAPuAAAAQAAAAAEAAAAAAAAACVNlY3AyNTZyMQAAAAAAAAEAAAfQAAAAElNlY3AyNTZyMVNpZ25hdHVyZQAA",
         "AAAAAQAAAAAAAAAAAAAAClNpZ25hdHVyZXMAAAAAAAEAAAAAAAAAATAAAAAAAAPsAAAH0AAAAAlTaWduZXJLZXkAAAAAAAPoAAAH0AAAAAlTaWduYXR1cmUAAAA=",
+        "AAAAAAAAAAAAAAANX19jb25zdHJ1Y3RvcgAAAAAAAAEAAAAAAAAABnNpZ25lcgAAAAAD6AAAB9AAAAAGU2lnbmVyAAAAAAAA",
         "AAAAAAAAAAAAAAAKYWRkX3NpZ25lcgAAAAAAAQAAAAAAAAAGc2lnbmVyAAAAAAfQAAAABlNpZ25lcgAAAAAAAA==",
         "AAAAAAAAAAAAAAANdXBkYXRlX3NpZ25lcgAAAAAAAAEAAAAAAAAABnNpZ25lcgAAAAAH0AAAAAZTaWduZXIAAAAAAAA=",
         "AAAAAAAAAAAAAAANcmVtb3ZlX3NpZ25lcgAAAAAAAAEAAAAAAAAACnNpZ25lcl9rZXkAAAAAB9AAAAAJU2lnbmVyS2V5AAAAAAAAAA==",

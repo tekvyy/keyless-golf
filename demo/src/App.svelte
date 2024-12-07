@@ -20,7 +20,7 @@
 	const NATIVE_SAC =
 		"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 	const SAMPLE_POLICY =
-		"CBIRRYPWSJDAY5DB2SVWUTOEWITOWWMET5INMBSHOUXECGYYBSZDWPTA";
+		"CD5G5U4WNEECTZIVLLLGYAB2IWCPITFASTTZYP4OE6PIDDKW4HGYGFPQ";
 	const SECRET = "SBEIDWQVWNLPCP35EYQ6GLWKFQ2MDY7APRLOQ3AJNU6KSE7FXGA7C55W";
 	const PUBLIC = "GBVQMKYWGELU6IKLK2U6EIIHTNW5LIUYJE7FUQPG4FAB3QQ3KAINFVYS";
 
@@ -49,6 +49,7 @@
 				contractId: cid,
 				built,
 			} = await account.createWallet("Super Peach", user);
+			
 			const res = await server.send(built);
 
 			console.log(res);
@@ -223,7 +224,7 @@
 		const keypair = Keypair.fromSecret(SECRET);
 
 		const at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});
@@ -248,7 +249,7 @@
 		if (secret) {
 			const keypair = Keypair.fromSecret(secret);
 			const at = await native.transfer({
-				to: account.factory.options.contractId,
+				to: fundPubkey,
 				from: contractId,
 				amount: BigInt(10_000_000),
 			});
@@ -271,7 +272,7 @@
 		const keypair = Keypair.fromSecret(SECRET);
 
 		let at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});
@@ -297,7 +298,7 @@
 		}
 
 		const at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});

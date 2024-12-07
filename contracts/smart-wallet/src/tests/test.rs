@@ -11,15 +11,11 @@ use smart_wallet_interface::types::{
     Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
 };
 use soroban_sdk::{
-    map,
-    testutils::EnvTestConfig,
-    token, vec,
-    xdr::{
+    map, testutils::EnvTestConfig, token, vec, xdr::{
         HashIdPreimage, HashIdPreimageSorobanAuthorization, InvokeContractArgs, Limits,
         SorobanAddressCredentials, SorobanAuthorizationEntry, SorobanAuthorizedFunction,
         SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, VecM, WriteXdr,
-    },
-    Address, Bytes, BytesN, Env, String,
+    }, Address, Bytes, BytesN, Env, String
 };
 use stellar_strkey::{ed25519, Strkey};
 
@@ -35,10 +31,10 @@ fn test() {
     let amount = 10_000_000i128;
     let evil_amount = 10_000_00i128;
 
-    let wallet_address = env.register_contract(None, Contract);
+    let wallet_address = env.register(Contract, (None::<Signer>,));
     let wallet_client = ContractClient::new(&env, &wallet_address);
 
-    let example_contract_address = env.register_contract(None, ExampleContract);
+    let example_contract_address = env.register(ExampleContract, ());
     let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
 
     // SAC
@@ -129,7 +125,7 @@ fn test() {
     //
 
     // Policy
-    let sample_policy_address = env.register_contract(None, PolicyContract);
+    let sample_policy_address = env.register(PolicyContract, ());
     let sample_policy_signer_key = SignerKey::Policy(sample_policy_address.clone());
     //
 

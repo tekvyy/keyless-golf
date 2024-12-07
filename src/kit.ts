@@ -1,4 +1,3 @@
-import { Client as FactoryClient } from 'passkey-factory-sdk'
 import { Client as PasskeyClient, type Signature, type SignerKey as SDKSignerKey, type SignerLimits as SDKSignerLimits } from 'passkey-kit-sdk'
 import { StrKey, hash, xdr, Keypair, Address } from '@stellar/stellar-sdk/minimal'
 import type { AuthenticatorAttestationResponseJSON, AuthenticatorSelectionCriteria } from "@simplewebauthn/types"
@@ -7,69 +6,69 @@ import { Buffer } from 'buffer'
 import base64url from 'base64url'
 import type { SignerKey, SignerLimits, SignerStore } from './types'
 import { PasskeyBase } from './base'
-import { AssembledTransaction, DEFAULT_TIMEOUT, type Tx } from '@stellar/stellar-sdk/minimal/contract'
+import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type Tx } from '@stellar/stellar-sdk/minimal/contract'
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
-// TODO Return base64url encoded strings as well as buffers
-
 export class PasskeyKit extends PasskeyBase {
-    declare public rpc: Server
-    declare public rpcUrl: string
-    public keyId: string | undefined
-    public networkPassphrase: string
-    public factory: FactoryClient
-    public wallet: PasskeyClient | undefined
-    public WebAuthn: {
+    declare rpc: Server
+    declare rpcUrl: string
+
+    private keyId: string | undefined
+    private networkPassphrase: string
+    private walletKeypair = Keypair.fromRawEd25519Seed(Buffer.alloc(32))
+    private walletPublicKey = this.walletKeypair.publicKey()
+    private walletWasmHash: string
+    private WebAuthn: {
         startRegistration: typeof startRegistration,
         startAuthentication: typeof startAuthentication
     }
+    
+    public wallet: PasskeyClient | undefined
 
     constructor(options: {
         rpcUrl: string,
         networkPassphrase: string,
-        factoryContractId: string,
+        walletWasmHash: string,
         WebAuthn?: {
             startRegistration: typeof startRegistration,
             startAuthentication: typeof startAuthentication
         }
     }) {
-        const { rpcUrl, networkPassphrase, factoryContractId, WebAuthn } = options
+        const { rpcUrl, networkPassphrase, walletWasmHash, WebAuthn } = options
 
         super(rpcUrl)
 
         this.networkPassphrase = networkPassphrase
-        this.factory = new FactoryClient({
-            contractId: factoryContractId,
-            networkPassphrase,
-            rpcUrl
-        })
+        this.walletWasmHash = walletWasmHash
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
     }
 
     public async createWallet(app: string, user: string) {
         const { keyId, keyId_base64, publicKey } = await this.createKey(app, user)
 
-        const { result, built } = await this.factory.deploy({
-            salt: hash(keyId),
-            signer: {
-                tag: 'Secp256r1',
-                values: [
-                    keyId,
-                    publicKey,
-                    undefined,
-                    [new Map()],
-                    { tag: 'Persistent', values: undefined },
-                ]
+        const at = await PasskeyClient.deploy(
+            {
+                signer: {
+                    tag: 'Secp256r1',
+                    values: [
+                        keyId,
+                        publicKey,
+                        undefined,
+                        [new Map()],
+                        { tag: 'Persistent', values: undefined },
+                    ]
+                }
             },
-        })
+            {
+                rpcUrl: this.rpcUrl,
+                wasmHash: this.walletWasmHash,
+                networkPassphrase: this.networkPassphrase,
+                publicKey: this.walletPublicKey,
+                salt: hash(keyId),
+            }
+        )
 
-        if (result.isErr())
-            throw new Error(result.unwrapErr().message)
-
-        if (!built)
-            throw new Error('Failed to create wallet')
-
-        const contractId = result.unwrap()
+        const contractId = at.result.options.contractId
 
         this.wallet = new PasskeyClient({
             contractId,
@@ -77,11 +76,15 @@ export class PasskeyKit extends PasskeyBase {
             rpcUrl: this.rpcUrl
         })
 
+        await at.sign({
+            signTransaction: basicNodeSigner(this.walletKeypair, this.networkPassphrase).signTransaction
+        })
+
         return {
             keyId,
             keyId_base64,
             contractId,
-            built
+            built: at.signed
         }
     }
 
@@ -158,7 +161,7 @@ export class PasskeyKit extends PasskeyBase {
                 networkId: hash(Buffer.from(this.networkPassphrase)),
                 contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                     new xdr.ContractIdPreimageFromAddress({
-                        address: Address.fromString(this.factory.options.contractId).toScAddress(),
+                        address: Address.fromString(this.walletPublicKey).toScAddress(),
                         salt: hash(keyIdBuffer),
                     })
                 )

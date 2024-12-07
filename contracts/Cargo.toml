@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 
-members = ["smart-wallet", "smart-wallet-interface", "smart-wallet-factory", "example-contract", "sample-policy"]
+members = ["smart-wallet", "smart-wallet-interface", "example-contract", "sample-policy"]
 
 [workspace.dependencies]
-soroban-sdk = { version = "21.7.7" }
+soroban-sdk = { version = "22.0.0-rc.3.2" }
 serde = { version = "1", default-features = false }
 serde-json-core = { version = "0.6.0", default-features = false }
 stellar-xdr = { version = "21.2.0", default-features = false }
@@ -15,7 +15,6 @@ base64 = "0.22.1"
 stellar-strkey = { version = "0.0.11" }
 smart-wallet = { path = "smart-wallet" }
 smart-wallet-interface = { path = "smart-wallet-interface" }
-smart-wallet-factory = { path = "smart-wallet-factory" }
 example-contract = { path = "example-contract" }
 sample-policy = { path = "sample-policy" }
 
