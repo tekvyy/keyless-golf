@@ -31,7 +31,7 @@ export const fundSigner = basicNodeSigner(await fundKeypair, import.meta.env.VIT
 export const account = new PasskeyKit({
     rpcUrl: import.meta.env.VITE_rpcUrl,
     networkPassphrase: import.meta.env.VITE_networkPassphrase,
-    factoryContractId: import.meta.env.VITE_factoryContractId,
+    walletWasmHash: import.meta.env.VITE_walletWasmHash,
 });
 export const server = new PasskeyServer({
     rpcUrl: import.meta.env.VITE_rpcUrl,

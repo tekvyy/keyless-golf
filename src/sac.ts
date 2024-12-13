@@ -3,8 +3,9 @@ import { PasskeyBase } from "./base"
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
 export class SACClient extends PasskeyBase {
-    declare public rpc: Server
-    declare public rpcUrl: string
+    declare rpc: Server
+    declare rpcUrl: string
+
     public networkPassphrase: string
     
     constructor(options: {

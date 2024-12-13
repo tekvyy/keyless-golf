@@ -3,21 +3,11 @@ import {
   AssembledTransaction,
   Client as ContractClient,
   ClientOptions as ContractClientOptions,
-  Result,
   Spec as ContractSpec,
 } from '@stellar/stellar-sdk/minimal/contract';
 import type {
   u32,
-  i32,
-  u64,
-  i64,
-  u128,
-  i128,
-  u256,
-  i256,
   Option,
-  Typepoint,
-  Duration,
 } from '@stellar/stellar-sdk/minimal/contract';
 
 if (typeof window !== 'undefined') {
@@ -25,41 +15,23 @@ if (typeof window !== 'undefined') {
   window.Buffer = window.Buffer || Buffer;
 }
 
-export const networks = {
-  testnet: {
-    networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "NIL",
-  }
-} as const
-
 export const Errors = {
   1: { message: "NotFound" },
-
   2: { message: "AlreadyExists" },
-
   3: { message: "MissingContext" },
-
   4: { message: "SignerExpired" },
-
   5: { message: "FailedSignerLimits" },
-
   6: { message: "FailedPolicySignerLimits" },
-
   7: { message: "SignatureKeyValueMismatch" },
-
   8: { message: "ClientDataJsonChallengeIncorrect" },
-
   9: { message: "JsonParseError" }
 }
+
 export type SignerLimits = readonly [Map<string, Option<Array<SignerKey>>>];
 export type SignerKey = { tag: "Policy", values: readonly [string] } | { tag: "Ed25519", values: readonly [Buffer] } | { tag: "Secp256r1", values: readonly [Buffer] };
-
 export type SignerVal = { tag: "Policy", values: readonly [Option<u32>, SignerLimits] } | { tag: "Ed25519", values: readonly [Option<u32>, SignerLimits] } | { tag: "Secp256r1", values: readonly [Buffer, Option<u32>, SignerLimits] };
-
 export type SignerStorage = { tag: "Persistent", values: void } | { tag: "Temporary", values: void };
-
 export type Signer = { tag: "Policy", values: readonly [string, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Ed25519", values: readonly [Buffer, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Secp256r1", values: readonly [Buffer, Buffer, Option<u32>, SignerLimits, SignerStorage] };
-
 
 export interface Secp256r1Signature {
   authenticator_data: Buffer;
@@ -68,7 +40,6 @@ export interface Secp256r1Signature {
 }
 
 export type Signature = { tag: "Ed25519", values: readonly [Buffer] } | { tag: "Secp256r1", values: readonly [Secp256r1Signature] };
-
 export type Signatures = readonly [Map<SignerKey, Option<Signature>>];
 
 export interface Client {
@@ -151,7 +122,6 @@ export interface Client {
      */
     simulate?: boolean;
   }) => Promise<AssembledTransaction<null>>
-
 }
 export class Client extends ContractClient {
   constructor(public readonly options: ContractClientOptions) {
@@ -165,6 +135,7 @@ export class Client extends ContractClient {
         "AAAAAQAAAAAAAAAAAAAAElNlY3AyNTZyMVNpZ25hdHVyZQAAAAAAAwAAAAAAAAASYXV0aGVudGljYXRvcl9kYXRhAAAAAAAOAAAAAAAAABBjbGllbnRfZGF0YV9qc29uAAAADgAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEA=",
         "AAAAAgAAAAAAAAAAAAAACVNpZ25hdHVyZQAAAAAAAAIAAAABAAAAAAAAAAdFZDI1NTE5AAAAAAEAAAPuAAAAQAAAAAEAAAAAAAAACVNlY3AyNTZyMQAAAAAAAAEAAAfQAAAAElNlY3AyNTZyMVNpZ25hdHVyZQAA",
         "AAAAAQAAAAAAAAAAAAAAClNpZ25hdHVyZXMAAAAAAAEAAAAAAAAAATAAAAAAAAPsAAAH0AAAAAlTaWduZXJLZXkAAAAAAAPoAAAH0AAAAAlTaWduYXR1cmUAAAA=",
+        "AAAAAAAAAAAAAAANX19jb25zdHJ1Y3RvcgAAAAAAAAEAAAAAAAAABnNpZ25lcgAAAAAD6AAAB9AAAAAGU2lnbmVyAAAAAAAA",
         "AAAAAAAAAAAAAAAKYWRkX3NpZ25lcgAAAAAAAQAAAAAAAAAGc2lnbmVyAAAAAAfQAAAABlNpZ25lcgAAAAAAAA==",
         "AAAAAAAAAAAAAAANdXBkYXRlX3NpZ25lcgAAAAAAAAEAAAAAAAAABnNpZ25lcgAAAAAH0AAAAAZTaWduZXIAAAAAAAA=",
         "AAAAAAAAAAAAAAANcmVtb3ZlX3NpZ25lcgAAAAAAAAEAAAAAAAAACnNpZ25lcl9rZXkAAAAAB9AAAAAJU2lnbmVyS2V5AAAAAAAAAA==",

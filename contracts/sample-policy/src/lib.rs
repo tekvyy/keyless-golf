@@ -31,7 +31,7 @@ impl PolicyInterface for Contract {
                         }
                     }
                 }
-                Context::CreateContractHostFn(_) => panic_with_error!(&env, Error::NotAllowed),
+                _ => panic_with_error!(&env, Error::NotAllowed),
             }
         }
     }

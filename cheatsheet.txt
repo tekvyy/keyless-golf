@@ -13,6 +13,6 @@ stellar contract deploy --wasm target/wasm32-unknown-unknown/release/sample_poli
 
 export JWT=???
 mercury-cli --jwt $JWT --local false --mainnet false deploy
-mercury-cli --jwt $JWT --local false --mainnet false catchup --project-name "smart-wallets-next-dima" --contracts CAO555SGDJ4TA3CYZ6TRVACQG5O6ROY24PSQZULVGRSJ2A772CFDVGV7
+mercury-cli --jwt $JWT --local false --mainnet false catchup --project-name "smart-wallets-next-dima" --contracts CBVTK6PLO2P7N47ABXP52SJSHSW3RJRS3SGZHQMLZCQ3SLP36IN3FS7X
 curl -X GET https://api.mercurydata.app/catchups/4
 curl -X POST https://api.mercurydata.app/v2/key -H "Authorization: Bearer $JWT"

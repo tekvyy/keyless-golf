@@ -1,4 +1,4 @@
-import { xdr } from "@stellar/stellar-sdk/minimal"
+import { Transaction, xdr, Networks, Operation } from "@stellar/stellar-sdk/minimal"
 import { PasskeyBase } from "./base"
 import base64url from "base64url"
 import type { Tx } from "@stellar/stellar-sdk/minimal/contract"
@@ -7,12 +7,13 @@ import { AssembledTransaction } from "@stellar/stellar-sdk/minimal/contract"
 import { Durability } from "@stellar/stellar-sdk/minimal/rpc"
 
 export class PasskeyServer extends PasskeyBase {
+    private launchtubeJwt: string | undefined
+    private mercuryJwt: string | undefined
+    private mercuryKey: string | undefined
+
     public launchtubeUrl: string | undefined
-    public launchtubeJwt: string | undefined
     public mercuryProjectName: string | undefined
     public mercuryUrl: string | undefined
-    public mercuryJwt: string | undefined
-    public mercuryKey: string | undefined
 
     constructor(options: {
         rpcUrl?: string,

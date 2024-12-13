@@ -35,10 +35,33 @@ fn test() {
     let amount = 10_000_000i128;
     let evil_amount = 10_000_00i128;
 
-    let wallet_address = env.register_contract(None, Contract);
+    // Super Ed25519
+    let super_ed25519_keypair = Keypair::from_bytes(&[
+        88, 206, 67, 128, 240, 45, 168, 148, 191, 111, 180, 111, 104, 83, 214, 113, 78, 27, 55, 86,
+        200, 247, 164, 163, 76, 236, 24, 208, 115, 40, 231, 255, 161, 115, 141, 114, 97, 125, 136,
+        247, 117, 105, 60, 155, 144, 51, 216, 187, 185, 157, 18, 126, 169, 172, 15, 4, 148, 13,
+        208, 144, 53, 12, 91, 78,
+    ])
+    .unwrap();
+
+    let super_ed25519_strkey =
+        Strkey::PublicKeyEd25519(ed25519::PublicKey(super_ed25519_keypair.public.to_bytes()));
+    let super_ed25519 = Bytes::from_slice(&env, super_ed25519_strkey.to_string().as_bytes());
+    let super_ed25519 = Address::from_string_bytes(&super_ed25519);
+
+    let super_ed25519_bytes = super_ed25519.to_xdr(&env);
+    let super_ed25519_bytes = super_ed25519_bytes.slice(super_ed25519_bytes.len() - 32..);
+    let mut super_ed25519_array = [0u8; 32];
+    super_ed25519_bytes.copy_into_slice(&mut super_ed25519_array);
+    let super_ed25519_bytes = BytesN::from_array(&env, &super_ed25519_array);
+
+    let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
+    //
+
+    let wallet_address = env.register(Contract, (Signer::Ed25519(super_ed25519_bytes, None, SignerLimits(map![&env]), SignerStorage::Persistent),));
     let wallet_client = ContractClient::new(&env, &wallet_address);
 
-    let example_contract_address = env.register_contract(None, ExampleContract);
+    let example_contract_address = env.register(ExampleContract, ());
     let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
 
     // SAC
@@ -49,35 +72,12 @@ fn test() {
     let sac = env.register_stellar_asset_contract_v2(sac_admin);
     let sac_address = sac.address();
     let sac_admin_client = token::StellarAssetClient::new(&env, &sac_address);
-    // let sac_client = token::Client::new(&env, &sac_address);
+    let sac_client = token::Client::new(&env, &sac_address);
     //
 
     sac_admin_client
         .mock_all_auths()
         .mint(&wallet_address, &100_000_000);
-
-    // Super Ed25519
-    // let super_ed25519_keypair = Keypair::from_bytes(&[
-    //     88, 206, 67, 128, 240, 45, 168, 148, 191, 111, 180, 111, 104, 83, 214, 113, 78, 27, 55, 86,
-    //     200, 247, 164, 163, 76, 236, 24, 208, 115, 40, 231, 255, 161, 115, 141, 114, 97, 125, 136,
-    //     247, 117, 105, 60, 155, 144, 51, 216, 187, 185, 157, 18, 126, 169, 172, 15, 4, 148, 13,
-    //     208, 144, 53, 12, 91, 78,
-    // ])
-    // .unwrap();
-
-    // let super_ed25519_strkey =
-    //     Strkey::PublicKeyEd25519(ed25519::PublicKey(super_ed25519_keypair.public.to_bytes()));
-    // let super_ed25519 = Bytes::from_slice(&env, super_ed25519_strkey.to_string().as_bytes());
-    // let super_ed25519 = Address::from_string_bytes(&super_ed25519);
-
-    // let super_ed25519_bytes = super_ed25519.to_xdr(&env);
-    // let super_ed25519_bytes = super_ed25519_bytes.slice(super_ed25519_bytes.len() - 32..);
-    // let mut super_ed25519_array = [0u8; 32];
-    // super_ed25519_bytes.copy_into_slice(&mut super_ed25519_array);
-    // let super_ed25519_bytes = BytesN::from_array(&env, &super_ed25519_array);
-
-    // let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
-    //
 
     // Secp256r1
     // let secp256r1_id = Bytes::from_array(
@@ -129,7 +129,7 @@ fn test() {
     //
 
     // Policy
-    let sample_policy_address = env.register_contract(None, PolicyContract);
+    let sample_policy_address = env.register(PolicyContract, ());
     let sample_policy_signer_key = SignerKey::Policy(sample_policy_address.clone());
     //
 
