@@ -3,7 +3,6 @@ import {
   AssembledTransaction,
   Client as ContractClient,
   ClientOptions as ContractClientOptions,
-  MethodOptions,
   Spec as ContractSpec,
 } from '@stellar/stellar-sdk/minimal/contract';
 import type {
@@ -18,30 +17,20 @@ if (typeof window !== 'undefined') {
 
 export const Errors = {
   1: { message: "NotFound" },
-
   2: { message: "AlreadyExists" },
-
   3: { message: "MissingContext" },
-
   4: { message: "SignerExpired" },
-
   5: { message: "FailedSignerLimits" },
-
   6: { message: "FailedPolicySignerLimits" },
-
   7: { message: "SignatureKeyValueMismatch" },
-
   8: { message: "ClientDataJsonChallengeIncorrect" },
-
   9: { message: "JsonParseError" }
 }
+
 export type SignerLimits = readonly [Map<string, Option<Array<SignerKey>>>];
 export type SignerKey = { tag: "Policy", values: readonly [string] } | { tag: "Ed25519", values: readonly [Buffer] } | { tag: "Secp256r1", values: readonly [Buffer] };
-
 export type SignerVal = { tag: "Policy", values: readonly [Option<u32>, SignerLimits] } | { tag: "Ed25519", values: readonly [Option<u32>, SignerLimits] } | { tag: "Secp256r1", values: readonly [Buffer, Option<u32>, SignerLimits] };
-
 export type SignerStorage = { tag: "Persistent", values: void } | { tag: "Temporary", values: void };
-
 export type Signer = { tag: "Policy", values: readonly [string, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Ed25519", values: readonly [Buffer, Option<u32>, SignerLimits, SignerStorage] } | { tag: "Secp256r1", values: readonly [Buffer, Buffer, Option<u32>, SignerLimits, SignerStorage] };
 
 export interface Secp256r1Signature {
@@ -51,7 +40,6 @@ export interface Secp256r1Signature {
 }
 
 export type Signature = { tag: "Ed25519", values: readonly [Buffer] } | { tag: "Secp256r1", values: readonly [Secp256r1Signature] };
-
 export type Signatures = readonly [Map<SignerKey, Option<Signature>>];
 
 export interface Client {
@@ -134,25 +122,8 @@ export interface Client {
      */
     simulate?: boolean;
   }) => Promise<AssembledTransaction<null>>
-
 }
 export class Client extends ContractClient {
-  static async deploy<T = Client>(
-    /** Constructor/Initialization Args for the contract's `__constructor` method */
-    { signer }: { signer: Option<Signer> },
-    /** Options for initalizing a Client as well as for calling a method, with extras specific to deploying. */
-    options: MethodOptions &
-      Omit<ContractClientOptions, "contractId"> & {
-        /** The hash of the Wasm blob, which must already be installed on-chain. */
-        wasmHash: Buffer | string;
-        /** Salt used to generate the contract's ID. Passed through to {@link Operation.createCustomContract}. Default: random. */
-        salt?: Buffer | Uint8Array;
-        /** The format used to decode `wasmHash`, if it's provided as a string. */
-        format?: "hex" | "base64";
-      }
-  ): Promise<AssembledTransaction<T>> {
-    return ContractClient.deploy({ signer }, options)
-  }
   constructor(public readonly options: ContractClientOptions) {
     super(
       new ContractSpec(["AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAACQAAAAAAAAAITm90Rm91bmQAAAABAAAAAAAAAA1BbHJlYWR5RXhpc3RzAAAAAAAAAgAAAAAAAAAOTWlzc2luZ0NvbnRleHQAAAAAAAMAAAAAAAAADVNpZ25lckV4cGlyZWQAAAAAAAAEAAAAAAAAABJGYWlsZWRTaWduZXJMaW1pdHMAAAAAAAUAAAAAAAAAGEZhaWxlZFBvbGljeVNpZ25lckxpbWl0cwAAAAYAAAAAAAAAGVNpZ25hdHVyZUtleVZhbHVlTWlzbWF0Y2gAAAAAAAAHAAAAAAAAACBDbGllbnREYXRhSnNvbkNoYWxsZW5nZUluY29ycmVjdAAAAAgAAAAAAAAADkpzb25QYXJzZUVycm9yAAAAAAAJ",
