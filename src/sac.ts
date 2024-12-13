@@ -6,7 +6,7 @@ export class SACClient extends PasskeyBase {
     declare rpc: Server
     declare rpcUrl: string
 
-    private networkPassphrase: string
+    public networkPassphrase: string
     
     constructor(options: {
         networkPassphrase: string,

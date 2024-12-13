@@ -47,10 +47,10 @@
 			const {
 				keyId: kid,
 				contractId: cid,
-				built,
+				signedTx,
 			} = await account.createWallet("Super Peach", user);
 			
-			const res = await server.send(built);
+			const res = await server.send(signedTx);
 
 			console.log(res);
 

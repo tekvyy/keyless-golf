@@ -13,16 +13,16 @@ export class PasskeyKit extends PasskeyBase {
     declare rpc: Server
     declare rpcUrl: string
 
-    private keyId: string | undefined
-    private networkPassphrase: string
-    private walletKeypair = Keypair.fromRawEd25519Seed(Buffer.alloc(32))
-    private walletPublicKey = this.walletKeypair.publicKey()
+    private walletKeypair: Keypair 
+    private walletPublicKey: string 
     private walletWasmHash: string
     private WebAuthn: {
         startRegistration: typeof startRegistration,
         startAuthentication: typeof startAuthentication
     }
-    
+
+    public keyId: string | undefined
+    public networkPassphrase: string
     public wallet: PasskeyClient | undefined
 
     constructor(options: {
@@ -39,12 +39,14 @@ export class PasskeyKit extends PasskeyBase {
         super(rpcUrl)
 
         this.networkPassphrase = networkPassphrase
+        this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from(this.networkPassphrase)))
+        this.walletPublicKey = this.walletKeypair.publicKey()
         this.walletWasmHash = walletWasmHash
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
     }
 
     public async createWallet(app: string, user: string) {
-        const { keyId, keyId_base64, publicKey } = await this.createKey(app, user)
+        const { keyId, keyIdBase64, publicKey } = await this.createKey(app, user)
 
         const at = await PasskeyClient.deploy(
             {
@@ -82,9 +84,9 @@ export class PasskeyKit extends PasskeyBase {
 
         return {
             keyId,
-            keyId_base64,
+            keyIdBase64,
             contractId,
-            built: at.signed
+            signedTx: at.signed!
         }
     }
 
@@ -120,7 +122,7 @@ export class PasskeyKit extends PasskeyBase {
 
         return {
             keyId: base64url.toBuffer(id),
-            keyId_base64: id,
+            keyIdBase64: id,
             publicKey: await this.getPublicKey(response),
         }
     }
@@ -189,7 +191,7 @@ export class PasskeyKit extends PasskeyBase {
 
         return {
             keyId: keyIdBuffer,
-            keyId_base64: keyId,
+            keyIdBase64: keyId,
             contractId
         }
     }

@@ -35,11 +35,8 @@ const INITIALIZED: Symbol = symbol_short!("init");
 
 #[contractimpl]
 impl SmartWalletInterface for Contract {
-    fn __constructor(env: Env, signer: Option<Signer>) {
-        match signer {
-            Some(signer) => Self::add_signer(env, signer),
-            None => (),
-        }
+    fn __constructor(env: Env, signer: Signer) {
+        Self::add_signer(env, signer);
     }
     fn add_signer(env: Env, signer: Signer) {
         if env

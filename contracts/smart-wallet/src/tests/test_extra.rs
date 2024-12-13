@@ -8,9 +8,16 @@ use smart_wallet_interface::types::{
     Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
 };
 use soroban_sdk::{
-    map, testutils::EnvTestConfig, xdr::{
-        ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress, CreateContractArgsV2, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits, ScAddress, ScVal, SorobanAddressCredentials, SorobanAuthorizationEntry, SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256, VecM, WriteXdr
-    }, Address, Bytes, BytesN, Env
+    map,
+    testutils::EnvTestConfig,
+    xdr::{
+        ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress,
+        CreateContractArgsV2, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits,
+        ScAddress, ScVal, SorobanAddressCredentials, SorobanAuthorizationEntry,
+        SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256,
+        VecM, WriteXdr,
+    },
+    Address, Bytes, BytesN, Env,
 };
 use stellar_strkey::{ed25519, Strkey};
 
@@ -37,19 +44,6 @@ fn test_deploy_contract() {
 
     let signature_expiration_ledger = env.ledger().sequence();
 
-    let wallet_address = env.register(Contract, (None::<Signer>,));
-    let wallet_client = ContractClient::new(&env, &wallet_address);
-
-    let example_contract_address = env.register(ExampleContract, ());
-    let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
-
-    let wasm_hash = env.deployer().upload_contract_wasm(sample_policy::WASM);
-
-    let wallet_address_bytes = wallet_address.clone().to_xdr(&env);
-    let wallet_address_bytes = wallet_address_bytes.slice(wallet_address_bytes.len() - 32..);
-    let mut wallet_address_array = [0u8; 32];
-    wallet_address_bytes.copy_into_slice(&mut wallet_address_array);
-
     // Super Ed25519
     let super_ed25519_keypair = Keypair::from_bytes(&[
         88, 206, 67, 128, 240, 45, 168, 148, 191, 111, 180, 111, 104, 83, 214, 113, 78, 27, 55, 86,
@@ -71,14 +65,25 @@ fn test_deploy_contract() {
     let super_ed25519_bytes = BytesN::from_array(&env, &super_ed25519_array);
 
     let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
+    //
 
-    wallet_client.mock_all_auths().add_signer(&Signer::Ed25519(
+    let wallet_address = env.register(Contract, (Signer::Ed25519(
         super_ed25519_bytes,
         None,
         SignerLimits(map![&env]),
         SignerStorage::Persistent,
-    ));
-    //
+    ),));
+    let wallet_client = ContractClient::new(&env, &wallet_address);
+
+    let example_contract_address = env.register(ExampleContract, ());
+    let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
+
+    let wasm_hash = env.deployer().upload_contract_wasm(sample_policy::WASM);
+
+    let wallet_address_bytes = wallet_address.clone().to_xdr(&env);
+    let wallet_address_bytes = wallet_address_bytes.slice(wallet_address_bytes.len() - 32..);
+    let mut wallet_address_array = [0u8; 32];
+    wallet_address_bytes.copy_into_slice(&mut wallet_address_array);
 
     let root_invocation = SorobanAuthorizedInvocation {
         function: SorobanAuthorizedFunction::CreateContractV2HostFn(CreateContractArgsV2 {
