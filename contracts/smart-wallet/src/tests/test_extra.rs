@@ -4,49 +4,45 @@ use std::println;
 extern crate std;
 
 use example_contract::{Contract as ExampleContract, ContractClient as ExampleContractClient};
+use smart_wallet_interface::types::{
+    Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
+};
 use soroban_sdk::{
     map,
+    testutils::EnvTestConfig,
     xdr::{
-        ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress, CreateContractArgs,
-        Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits, ScAddress, ScVal,
-        SorobanAddressCredentials, SorobanAuthorizationEntry, SorobanAuthorizedFunction,
-        SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256, VecM, WriteXdr,
+        ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress,
+        CreateContractArgsV2, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits,
+        ScAddress, ScVal, SorobanAddressCredentials, SorobanAuthorizationEntry,
+        SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256,
+        VecM, WriteXdr,
     },
     Address, Bytes, BytesN, Env,
 };
 use stellar_strkey::{ed25519, Strkey};
-use webauthn_wallet_interface::types::{
-    Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
-};
 
 use crate::{Contract, ContractClient};
 use ed25519_dalek::{Keypair, Signer as _};
 
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 
-mod factory {
+mod sample_policy {
+    use crate::types::SignerKey;
+    use soroban_sdk::auth::Context;
     soroban_sdk::contractimport!(
-        file = "../target/wasm32-unknown-unknown/release/webauthn_factory.wasm"
+        file = "../target/wasm32-unknown-unknown/release/sample_policy.wasm"
     );
 }
 
 #[test]
 fn test_deploy_contract() {
-    let env: Env = Env::default();
+    let mut env: Env = Env::default();
+
+    env.set_config(EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
+
     let signature_expiration_ledger = env.ledger().sequence();
-
-    let wallet_address = env.register_contract(None, Contract);
-    let wallet_client = ContractClient::new(&env, &wallet_address);
-
-    let example_contract_address = env.register_contract(None, ExampleContract);
-    let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
-
-    let wasm_hash = env.deployer().upload_contract_wasm(factory::WASM);
-
-    let wallet_address_bytes = wallet_address.clone().to_xdr(&env);
-    let wallet_address_bytes = wallet_address_bytes.slice(wallet_address_bytes.len() - 32..);
-    let mut wallet_address_array = [0u8; 32];
-    wallet_address_bytes.copy_into_slice(&mut wallet_address_array);
 
     // Super Ed25519
     let super_ed25519_keypair = Keypair::from_bytes(&[
@@ -69,21 +65,34 @@ fn test_deploy_contract() {
     let super_ed25519_bytes = BytesN::from_array(&env, &super_ed25519_array);
 
     let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
-
-    wallet_client.mock_all_auths().add(&Signer::Ed25519(
-        super_ed25519_bytes,
-        SignerLimits(map![&env]),
-        SignerStorage::Persistent,
-    ));
     //
 
+    let wallet_address = env.register(Contract, (Signer::Ed25519(
+        super_ed25519_bytes,
+        None,
+        SignerLimits(map![&env]),
+        SignerStorage::Persistent,
+    ),));
+    let wallet_client = ContractClient::new(&env, &wallet_address);
+
+    let example_contract_address = env.register(ExampleContract, ());
+    let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
+
+    let wasm_hash = env.deployer().upload_contract_wasm(sample_policy::WASM);
+
+    let wallet_address_bytes = wallet_address.clone().to_xdr(&env);
+    let wallet_address_bytes = wallet_address_bytes.slice(wallet_address_bytes.len() - 32..);
+    let mut wallet_address_array = [0u8; 32];
+    wallet_address_bytes.copy_into_slice(&mut wallet_address_array);
+
     let root_invocation = SorobanAuthorizedInvocation {
-        function: SorobanAuthorizedFunction::CreateContractHostFn(CreateContractArgs {
+        function: SorobanAuthorizedFunction::CreateContractV2HostFn(CreateContractArgsV2 {
             contract_id_preimage: ContractIdPreimage::Address(ContractIdPreimageFromAddress {
                 address: ScAddress::Contract(Hash::from(wallet_address_array)),
                 salt: Uint256(wasm_hash.to_array()),
             }),
             executable: ContractExecutable::Wasm(Hash::from(wasm_hash.to_array())),
+            constructor_args: VecM::default(),
         }),
         sub_invocations: VecM::default(),
     };

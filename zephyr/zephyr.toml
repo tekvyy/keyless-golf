@@ -1,32 +1,4 @@
-name = "smart-wallets-data-multi-signer-multi-sig"
-
-# --- GENERIC EVENTS ---
-
-# [[tables]]
-# name = "adjacent"
-# force = false
-
-# [[tables.columns]]
-# name = "contract"
-# col_type = "BYTEA"
-
-# [[tables.columns]]
-# name = "address"
-# col_type = "BYTEA"
-
-# [[tables.columns]]
-# name = "topics"
-# col_type = "BYTEA"
-
-# [[tables.columns]]
-# name = "data"
-# col_type = "BYTEA"
-
-# [[tables.columns]]
-# name = "date"
-# col_type = "BYTEA"
-
-# --- SIGNERS ---
+name = "smart-wallets-next-dima"
 
 [[tables]]
 name = "signers"
@@ -45,6 +17,14 @@ index = true
 [[tables.columns]]
 name = "val"
 col_type = "BYTEA"
+
+[[tables.columns]]
+name = "limits"
+col_type = "BYTEA"
+
+[[tables.columns]]
+name = "exp"
+col_type = "BIGINT"
 
 [[tables.columns]]
 name = "storage"

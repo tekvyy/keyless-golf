@@ -1,6 +1,6 @@
 [package]
-name = "webauthn-wallet"
-version = "0.4.1"
+name = "smart-wallet"
+version = "0.4.4"
 authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 edition = "2021"
@@ -15,17 +15,15 @@ testutils = []
 
 [dependencies]
 soroban-sdk = { workspace = true }
-webauthn-wallet-interface = { workspace = true }
+smart-wallet-interface = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde-json-core = { workspace = true }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-stellar-xdr = { workspace = true, features = ["std", "curr"] }
 stellar-strkey = { workspace = true }
 ed25519-dalek = { workspace = true }
 base64 = { workspace = true }
 sha256 = { workspace = true }
-rand = { workspace = true }
 sample-policy = { workspace = true, features = ["testutils"] }
 example-contract = { workspace = true, features = ["testutils"] }

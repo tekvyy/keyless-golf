@@ -1,10 +1,11 @@
 import { Client as SacClient } from 'sac-sdk'
 import { PasskeyBase } from "./base"
-import type { SorobanRpc } from '@stellar/stellar-sdk/minimal'
+import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
 export class SACClient extends PasskeyBase {
-    declare public rpc: SorobanRpc.Server
-    declare public rpcUrl: string
+    declare rpc: Server
+    declare rpcUrl: string
+
     public networkPassphrase: string
     
     constructor(options: {

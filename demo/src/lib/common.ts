@@ -1,10 +1,10 @@
 import { PasskeyKit, PasskeyServer, SACClient } from "passkey-kit";
-import { Account, Keypair, SorobanRpc, StrKey } from "@stellar/stellar-sdk/minimal"
+import { Account, Keypair, StrKey } from "@stellar/stellar-sdk/minimal"
 import { Buffer } from "buffer";
-import { basicNodeSigner } from "@stellar/stellar-sdk/contract";
-import { WebAuthn } from "@darkedges/capacitor-native-webauthn";
+import { basicNodeSigner } from "@stellar/stellar-sdk/minimal/contract";
+import { Server } from "@stellar/stellar-sdk/minimal/rpc";
 
-export const rpc = new SorobanRpc.Server(import.meta.env.VITE_rpcUrl);
+export const rpc = new Server(import.meta.env.VITE_rpcUrl);
 
 export const mockPubkey = StrKey.encodeEd25519PublicKey(Buffer.alloc(32))
 export const mockSource = new Account(mockPubkey, '0')
@@ -31,13 +31,13 @@ export const fundSigner = basicNodeSigner(await fundKeypair, import.meta.env.VIT
 export const account = new PasskeyKit({
     rpcUrl: import.meta.env.VITE_rpcUrl,
     networkPassphrase: import.meta.env.VITE_networkPassphrase,
-    factoryContractId: import.meta.env.VITE_factoryContractId,
-    WebAuthn
+    walletWasmHash: import.meta.env.VITE_walletWasmHash,
 });
 export const server = new PasskeyServer({
     rpcUrl: import.meta.env.VITE_rpcUrl,
     launchtubeUrl: import.meta.env.VITE_launchtubeUrl,
     launchtubeJwt: import.meta.env.VITE_launchtubeJwt,
+    mercuryProjectName: import.meta.env.VITE_mercuryProjectName,
     mercuryUrl: import.meta.env.VITE_mercuryUrl,
     mercuryJwt: import.meta.env.VITE_mercuryJwt,
 });

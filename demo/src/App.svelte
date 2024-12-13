@@ -9,7 +9,7 @@
 		server,
 	} from "./lib/common";
 	import { Keypair } from "@stellar/stellar-sdk/minimal";
-    import { SignerStore, SignerKey, type SignerLimits } from "passkey-kit";
+    import { SignerStore, SignerKey, type SignerLimits, type Signer } from "passkey-kit";
 
 	// TODO need to support two toggles:
 	// - between temp and persistent
@@ -20,7 +20,7 @@
 	const NATIVE_SAC =
 		"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 	const SAMPLE_POLICY =
-		"CBIRRYPWSJDAY5DB2SVWUTOEWITOWWMET5INMBSHOUXECGYYBSZDWPTA";
+		"CD5G5U4WNEECTZIVLLLGYAB2IWCPITFASTTZYP4OE6PIDDKW4HGYGFPQ";
 	const SECRET = "SBEIDWQVWNLPCP35EYQ6GLWKFQ2MDY7APRLOQ3AJNU6KSE7FXGA7C55W";
 	const PUBLIC = "GBVQMKYWGELU6IKLK2U6EIIHTNW5LIUYJE7FUQPG4FAB3QQ3KAINFVYS";
 
@@ -28,13 +28,7 @@
 	let contractId: string;
 	let adminSigner: string | undefined;
 	let balance: string;
-	let signers: {
-		kind: string;
-		key: string;
-		val: string;
-		limits: string;
-		expired?: boolean;
-	}[] = [];
+	let signers: Signer[] = [];
 
 	let keyName: string = "";
 	// let keyAdmin: boolean = false;
@@ -53,9 +47,10 @@
 			const {
 				keyId: kid,
 				contractId: cid,
-				built,
+				signedTx,
 			} = await account.createWallet("Super Peach", user);
-			const res = await server.send(built);
+			
+			const res = await server.send(signedTx);
 
 			console.log(res);
 
@@ -118,7 +113,8 @@
 				pk = publicKey;
 			}
 
-			const at = await account.addSecp256r1(id, pk, new Map(), SignerStore.Temporary);
+			const { sequence } = await account.rpc.getLatestLedger()
+			const at = await account.addSecp256r1(id, pk, new Map(), SignerStore.Temporary, sequence + 518_400);
 
 			await account.sign(at, { keyId: adminSigner });
 			const res = await server.send(at.built!);
@@ -228,7 +224,7 @@
 		const keypair = Keypair.fromSecret(SECRET);
 
 		const at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});
@@ -239,7 +235,7 @@
 
 		console.log(at.built!.toXDR());
 
-		const res = await server.send(at.built!);
+		const res = await server.send(at);
 
 		console.log(res);
 
@@ -253,7 +249,7 @@
 		if (secret) {
 			const keypair = Keypair.fromSecret(secret);
 			const at = await native.transfer({
-				to: account.factory.options.contractId,
+				to: fundPubkey,
 				from: contractId,
 				amount: BigInt(10_000_000),
 			});
@@ -276,7 +272,7 @@
 		const keypair = Keypair.fromSecret(SECRET);
 
 		let at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});
@@ -302,7 +298,7 @@
 		}
 
 		const at = await native.transfer({
-			to: account.factory.options.contractId,
+			to: fundPubkey,
 			from: contractId,
 			amount: BigInt(10_000_000),
 		});
@@ -381,7 +377,7 @@
 	{/if}
 
 	<ul>
-		{#each signers as { kind, key, val, limits, expired }}
+		{#each signers as { kind, key, val, expiration, limits, evicted }}
 			<li>
 				<button disabled>
 					{#if adminSigner === key}

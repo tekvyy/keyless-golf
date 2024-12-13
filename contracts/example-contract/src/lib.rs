@@ -10,7 +10,7 @@ impl Contract {
     pub fn deploy(env: Env, source: Address, wasm_hash: BytesN<32>) {
         env.deployer()
             .with_address(source, wasm_hash.clone())
-            .deploy(wasm_hash);
+            .deploy_v2(wasm_hash, ());
     }
     pub fn call(
         env: Env,
@@ -24,7 +24,7 @@ impl Contract {
         from.require_auth();
         token::Client::new(&env, &sac).transfer(&from, &to, &amount);
         token::Client::new(&env, &sac).transfer(&from, &to, &10_000_00);
-        // webauthn_wallet::ContractClient::new(&env, &from).remove(&signer_key);
-        // webauthn_wallet::ContractClient::new(&env, &from).add(&signer);
+        // smart_wallet::ContractClient::new(&env, &from).remove(&signer_key);
+        // smart_wallet::ContractClient::new(&env, &from).add(&signer);
     }
 }
