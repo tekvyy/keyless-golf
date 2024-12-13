@@ -1,6 +1,4 @@
-use soroban_sdk::{
-    contracterror, contracttype, Address, Bytes, BytesN, Map, Vec,
-};
+use soroban_sdk::{contracterror, contracttype, Address, Bytes, BytesN, Map, Vec};
 
 #[contracterror(export = false)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -41,7 +39,13 @@ pub enum SignerStorage {
 pub enum Signer {
     Policy(Address, SignerExpiration, SignerLimits, SignerStorage),
     Ed25519(BytesN<32>, SignerExpiration, SignerLimits, SignerStorage),
-    Secp256r1(Bytes, BytesN<65>, SignerExpiration, SignerLimits, SignerStorage),
+    Secp256r1(
+        Bytes,
+        BytesN<65>,
+        SignerExpiration,
+        SignerLimits,
+        SignerStorage,
+    ),
 }
 
 #[contracttype(export = false)]

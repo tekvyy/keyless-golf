@@ -5,16 +5,19 @@ extern crate std;
 
 use example_contract::{Contract as ExampleContract, ContractClient as ExampleContractClient};
 use smart_wallet_interface::types::{
-    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage
+    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage,
 };
 use soroban_sdk::{
-    map, symbol_short, testutils::EnvTestConfig, xdr::{
+    map, symbol_short,
+    testutils::EnvTestConfig,
+    xdr::{
         ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress,
         CreateContractArgsV2, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits,
         ScAddress, ScVal, SorobanAddressCredentials, SorobanAuthorizationEntry,
         SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256,
         VecM, WriteXdr,
-    }, Address, Bytes, BytesN, Env
+    },
+    Address, Bytes, BytesN, Env,
 };
 use stellar_strkey::{ed25519, Strkey};
 
@@ -73,12 +76,15 @@ fn test_deploy_contract() {
     let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
     //
 
-    let wallet_address = env.register(Contract, (Signer::Ed25519(
-        super_ed25519_bytes,
-        SignerExpiration(None),
-        SignerLimits(None),
-        SignerStorage::Persistent,
-    ),));
+    let wallet_address = env.register(
+        Contract,
+        (Signer::Ed25519(
+            super_ed25519_bytes,
+            SignerExpiration(None),
+            SignerLimits(None),
+            SignerStorage::Persistent,
+        ),),
+    );
     // let wallet_client = ContractClient::new(&env, &wallet_address);
 
     let example_contract_address = env.register(ExampleContract, ());
@@ -127,10 +133,7 @@ fn test_deploy_contract() {
             signature_expiration_ledger,
             signature: Signatures(map![
                 &env,
-                (
-                    super_ed25519_signer_key.clone(),
-                    super_ed25519_signature
-                ),
+                (super_ed25519_signer_key.clone(), super_ed25519_signature),
             ])
             .try_into()
             .unwrap(),

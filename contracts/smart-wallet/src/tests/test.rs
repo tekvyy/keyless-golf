@@ -8,7 +8,7 @@ use ed25519_dalek::{Keypair, Signer as _};
 use example_contract::{Contract as ExampleContract, ContractClient as ExampleContractClient};
 use sample_policy::Contract as PolicyContract;
 use smart_wallet_interface::types::{
-    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage
+    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage,
 };
 use soroban_sdk::{
     map,
@@ -58,7 +58,15 @@ fn test() {
     let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
     //
 
-    let wallet_address = env.register(Contract, (Signer::Ed25519(super_ed25519_bytes, SignerExpiration(None), SignerLimits(None), SignerStorage::Persistent),));
+    let wallet_address = env.register(
+        Contract,
+        (Signer::Ed25519(
+            super_ed25519_bytes,
+            SignerExpiration(None),
+            SignerLimits(None),
+            SignerStorage::Persistent,
+        ),),
+    );
     let wallet_client = ContractClient::new(&env, &wallet_address);
 
     let example_contract_address = env.register(ExampleContract, ());
@@ -280,10 +288,7 @@ fn test() {
             signature_expiration_ledger,
             signature: Signatures(map![
                 &env,
-                (
-                    simple_ed25519_signer_key.clone(),
-                    simple_ed25519_signature
-                ),
+                (simple_ed25519_signer_key.clone(), simple_ed25519_signature),
                 // (
                 //     sample_policy_signer_key.clone(),
                 //     None
