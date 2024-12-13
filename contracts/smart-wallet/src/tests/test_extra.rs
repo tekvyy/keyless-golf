@@ -5,19 +5,16 @@ extern crate std;
 
 use example_contract::{Contract as ExampleContract, ContractClient as ExampleContractClient};
 use smart_wallet_interface::types::{
-    Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
+    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage
 };
 use soroban_sdk::{
-    map,
-    testutils::EnvTestConfig,
-    xdr::{
+    map, symbol_short, testutils::EnvTestConfig, xdr::{
         ContractExecutable, ContractIdPreimage, ContractIdPreimageFromAddress,
         CreateContractArgsV2, Hash, HashIdPreimage, HashIdPreimageSorobanAuthorization, Limits,
         ScAddress, ScVal, SorobanAddressCredentials, SorobanAuthorizationEntry,
         SorobanAuthorizedFunction, SorobanAuthorizedInvocation, SorobanCredentials, ToXdr, Uint256,
         VecM, WriteXdr,
-    },
-    Address, Bytes, BytesN, Env,
+    }, Address, Bytes, BytesN, Env
 };
 use stellar_strkey::{ed25519, Strkey};
 
@@ -32,6 +29,15 @@ mod sample_policy {
     soroban_sdk::contractimport!(
         file = "../target/wasm32-unknown-unknown/release/sample_policy.wasm"
     );
+}
+
+#[test]
+fn test() {
+    let env = Env::default();
+
+    let test = symbol_short!("sw_v1");
+
+    println!("{:?}", test.to_xdr(&env));
 }
 
 #[test]
@@ -69,11 +75,11 @@ fn test_deploy_contract() {
 
     let wallet_address = env.register(Contract, (Signer::Ed25519(
         super_ed25519_bytes,
-        None,
-        SignerLimits(map![&env]),
+        SignerExpiration(None),
+        SignerLimits(None),
         SignerStorage::Persistent,
     ),));
-    let wallet_client = ContractClient::new(&env, &wallet_address);
+    // let wallet_client = ContractClient::new(&env, &wallet_address);
 
     let example_contract_address = env.register(ExampleContract, ());
     let example_contract_client = ExampleContractClient::new(&env, &example_contract_address);
@@ -123,7 +129,7 @@ fn test_deploy_contract() {
                 &env,
                 (
                     super_ed25519_signer_key.clone(),
-                    Some(super_ed25519_signature)
+                    super_ed25519_signature
                 ),
             ])
             .try_into()

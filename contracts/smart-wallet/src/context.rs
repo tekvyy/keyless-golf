@@ -14,9 +14,11 @@ pub fn verify_context(
     signatures: &Signatures,
 ) -> bool {
     // Signer has no limits, it can do anything
-    if signer_limits.0.is_empty() {
+    if signer_limits.0.is_none() {
         return true;
     }
+
+    let signer_limits = signer_limits.0.as_ref().unwrap();
 
     match context {
         Context::Contract(ContractContext {
@@ -24,7 +26,7 @@ pub fn verify_context(
             fn_name,
             args,
         }) => {
-            match signer_limits.0.get(contract.clone()) {
+            match signer_limits.get(contract.clone()) {
                 None => false, // signer limitations not met
                 Some(signer_limits_keys) => {
                     // If this signer has a smart wallet context limit, limit that context to only removing itself
@@ -48,9 +50,26 @@ pub fn verify_context(
                 }
             }
         }
-        _ => {
+        Context::CreateContractHostFn(_) => {
             // Only signers with the smart wallet context signer limit can deploy contracts
-            match signer_limits.0.get(env.current_contract_address()) {
+            match signer_limits.get(env.current_contract_address()) {
+                None => false, // signer limitations not met
+                Some(signer_limits_keys) => {
+                    verify_signer_limit_keys(
+                        env,
+                        signer_key,
+                        signatures,
+                        &signer_limits_keys,
+                        &context,
+                    );
+
+                    true
+                }
+            }
+        }
+        Context::CreateContractWithCtorHostFn(_) => {
+            // Only signers with the smart wallet context signer limit can deploy contracts
+            match signer_limits.get(env.current_contract_address()) {
                 None => false, // signer limitations not met
                 Some(signer_limits_keys) => {
                     verify_signer_limit_keys(

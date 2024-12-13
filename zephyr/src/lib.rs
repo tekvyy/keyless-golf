@@ -2,7 +2,7 @@ use base64::{
     engine::general_purpose::URL_SAFE, engine::general_purpose::URL_SAFE_NO_PAD, Engine as _,
 };
 use serde::{Deserialize, Serialize};
-use smart_wallet_interface::types::{SignerKey, SignerLimits, SignerStorage, SignerVal};
+use smart_wallet_interface::types::{SignerExpiration, SignerKey, SignerLimits, SignerStorage, SignerVal};
 use stellar_strkey::{ed25519, Strkey};
 use types::{
     Signers, SignersActive, SignersAddress, SignersKeyValLimitsExpStorage,
@@ -55,7 +55,7 @@ pub extern "C" fn on_close() {
                                             get_signer_expiration_limits(signer_val);
 
                                         older.val = env.to_scval(public_key);
-                                        older.exp = signer_expiration.unwrap_or(u32::MAX);
+                                        older.exp = signer_expiration.0.unwrap_or(u32::MAX);
                                         older.limits = env.to_scval(signer_limits);
                                         older.storage = env.to_scval(signer_storage);
                                         older.active = ScVal::Bool(true);
@@ -73,7 +73,7 @@ pub extern "C" fn on_close() {
                                             key: key.clone(),
                                             val: env.to_scval(public_key),
                                             limits: env.to_scval(signer_limits),
-                                            exp: signer_expiration.unwrap_or(u32::MAX),
+                                            exp: signer_expiration.0.unwrap_or(u32::MAX),
                                             storage: env.to_scval(signer_storage),
                                             active: ScVal::Bool(true),
                                         };
@@ -109,7 +109,7 @@ pub extern "C" fn on_close() {
 
 fn get_signer_expiration_limits(
     signer_val: SignerVal,
-) -> (Option<BytesN<65>>, Option<u32>, SignerLimits) {
+) -> (Option<BytesN<65>>, SignerExpiration, SignerLimits) {
     match signer_val {
         SignerVal::Policy(signer_expiration, signer_limits) => {
             (None, signer_expiration, signer_limits)

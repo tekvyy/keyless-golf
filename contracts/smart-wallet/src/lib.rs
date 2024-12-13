@@ -157,7 +157,7 @@ impl CustomAccountInterface for Contract {
                 None => panic_with_error!(env, Error::NotFound),
                 Some((signer_val, _)) => {
                     match signature {
-                        None => {
+                        Signature::Policy => {
                             // If there's a policy signer in the signatures map we call it as a full forward of this __check_auth's Vec<Context>
                             if let SignerKey::Policy(policy) = &signer_key {
                                 PolicyClient::new(&env, policy).policy__(
@@ -170,33 +170,31 @@ impl CustomAccountInterface for Contract {
 
                             panic_with_error!(&env, Error::SignatureKeyValueMismatch)
                         }
-                        Some(signature) => match signature {
-                            Signature::Ed25519(signature) => {
-                                if let SignerKey::Ed25519(public_key) = &signer_key {
-                                    env.crypto().ed25519_verify(
-                                        &public_key,
-                                        &signature_payload.clone().into(),
-                                        &signature,
-                                    );
-                                    continue;
-                                }
-
-                                panic_with_error!(&env, Error::SignatureKeyValueMismatch)
+                        Signature::Ed25519(signature) => {
+                            if let SignerKey::Ed25519(public_key) = &signer_key {
+                                env.crypto().ed25519_verify(
+                                    &public_key,
+                                    &signature_payload.clone().into(),
+                                    &signature,
+                                );
+                                continue;
                             }
-                            Signature::Secp256r1(signature) => {
-                                if let SignerVal::Secp256r1(public_key, _, _) = signer_val {
-                                    verify_secp256r1_signature(
-                                        &env,
-                                        &signature_payload,
-                                        &public_key,
-                                        signature,
-                                    );
-                                    continue;
-                                }
 
-                                panic_with_error!(&env, Error::SignatureKeyValueMismatch)
+                            panic_with_error!(&env, Error::SignatureKeyValueMismatch)
+                        }
+                        Signature::Secp256r1(signature) => {
+                            if let SignerVal::Secp256r1(public_key, _, _) = signer_val {
+                                verify_secp256r1_signature(
+                                    &env,
+                                    &signature_payload,
+                                    &public_key,
+                                    signature,
+                                );
+                                continue;
                             }
-                        },
+
+                            panic_with_error!(&env, Error::SignatureKeyValueMismatch)
+                        }
                     }
                 }
             };

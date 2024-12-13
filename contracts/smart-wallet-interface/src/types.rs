@@ -1,5 +1,5 @@
 use soroban_sdk::{
-    auth::Context as AuthContext, contracterror, contracttype, Address, Bytes, BytesN, Map, Vec,
+    contracterror, contracttype, Address, Bytes, BytesN, Map, Vec,
 };
 
 #[contracterror(export = false)]
@@ -17,13 +17,32 @@ pub enum Error {
     JsonParseError = 9,
 }
 
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct SignerExpiration(pub Option<u32>);
+
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
 // Map of contexts this signer can authorize if present in the __check_auth auth_contexts list
 // Map value is a list of SignerKeys which must all be present in the __check_auth signatures list in order for the signer to authorize the context
 // e.g. a policy runs on a SAC token to check how much it's withdrawing and also requires a signature from an additional ed25519 signer
 // e.g. an ed25519 signer can only be used to authorize a specific contract's invocations and no further keys are required
-pub struct SignerLimits(pub Map<Address, Option<Vec<SignerKey>>>);
+pub struct SignerLimits(pub Option<Map<Address, Option<Vec<SignerKey>>>>);
+
+#[contracttype(export = false)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum SignerStorage {
+    Persistent,
+    Temporary,
+}
+
+#[contracttype(export = false)]
+#[derive(Clone, Debug, PartialEq)]
+pub enum Signer {
+    Policy(Address, SignerExpiration, SignerLimits, SignerStorage),
+    Ed25519(BytesN<32>, SignerExpiration, SignerLimits, SignerStorage),
+    Secp256r1(Bytes, BytesN<65>, SignerExpiration, SignerLimits, SignerStorage),
+}
 
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
@@ -36,24 +55,9 @@ pub enum SignerKey {
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum SignerVal {
-    Policy(Option<u32>, SignerLimits),
-    Ed25519(Option<u32>, SignerLimits),
-    Secp256r1(BytesN<65>, Option<u32>, SignerLimits),
-}
-
-#[contracttype(export = false)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum SignerStorage {
-    Persistent,
-    Temporary,
-}
-
-#[contracttype(export = false)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum Signer {
-    Policy(Address, Option<u32>, SignerLimits, SignerStorage),
-    Ed25519(BytesN<32>, Option<u32>, SignerLimits, SignerStorage),
-    Secp256r1(Bytes, BytesN<65>, Option<u32>, SignerLimits, SignerStorage),
+    Policy(SignerExpiration, SignerLimits),
+    Ed25519(SignerExpiration, SignerLimits),
+    Secp256r1(BytesN<65>, SignerExpiration, SignerLimits),
 }
 
 #[contracttype(export = false)]
@@ -67,17 +71,11 @@ pub struct Secp256r1Signature {
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Signature {
+    Policy,
     Ed25519(BytesN<64>),
     Secp256r1(Secp256r1Signature),
 }
 
 #[contracttype(export = false)]
 #[derive(Clone, Debug, PartialEq)]
-pub struct Signatures(pub Map<SignerKey, Option<Signature>>);
-
-#[contracttype(export = false)]
-#[derive(Clone)]
-pub enum Context {
-    Base(Vec<AuthContext>),
-    Limit(AuthContext),
-}
+pub struct Signatures(pub Map<SignerKey, Signature>);

@@ -8,7 +8,7 @@ use ed25519_dalek::{Keypair, Signer as _};
 use example_contract::{Contract as ExampleContract, ContractClient as ExampleContractClient};
 use sample_policy::Contract as PolicyContract;
 use smart_wallet_interface::types::{
-    Signature, Signatures, Signer, SignerKey, SignerLimits, SignerStorage,
+    Signature, Signatures, Signer, SignerExpiration, SignerKey, SignerLimits, SignerStorage
 };
 use soroban_sdk::{
     map,
@@ -58,7 +58,7 @@ fn test() {
     let super_ed25519_signer_key = SignerKey::Ed25519(super_ed25519_bytes.clone());
     //
 
-    let wallet_address = env.register(Contract, (Signer::Ed25519(super_ed25519_bytes, None, SignerLimits(map![&env]), SignerStorage::Persistent),));
+    let wallet_address = env.register(Contract, (Signer::Ed25519(super_ed25519_bytes, SignerExpiration(None), SignerLimits(None), SignerStorage::Persistent),));
     let wallet_client = ContractClient::new(&env, &wallet_address);
 
     let example_contract_address = env.register(ExampleContract, ());
@@ -146,28 +146,28 @@ fn test() {
 
     wallet_client.mock_all_auths().add_signer(&Signer::Ed25519(
         simple_ed25519_bytes,
-        None,
-        SignerLimits(map![
+        SignerExpiration(None),
+        SignerLimits(Some(map![
             &env,
             (
                 sac_address.clone(),
                 Some(vec![&env, sample_policy_signer_key.clone()])
             ),
             (example_contract_address.clone(), None,)
-        ]),
+        ])),
         SignerStorage::Temporary,
     ));
 
     wallet_client.mock_all_auths().add_signer(&Signer::Policy(
         sample_policy_address.clone(),
-        None,
-        SignerLimits(map![
+        SignerExpiration(None),
+        SignerLimits(Some(map![
             &env,
             (
                 sac_address.clone(),
                 Some(vec![&env, simple_ed25519_signer_key.clone()])
             ),
-        ]),
+        ])),
         SignerStorage::Temporary,
     ));
     //
@@ -282,7 +282,7 @@ fn test() {
                 &env,
                 (
                     simple_ed25519_signer_key.clone(),
-                    Some(simple_ed25519_signature)
+                    simple_ed25519_signature
                 ),
                 // (
                 //     sample_policy_signer_key.clone(),
