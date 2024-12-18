@@ -1,5 +1,5 @@
 {
-  "version": "0.6.3",
+  "version": "0.6.4",
   "name": "passkey-kit-sdk",
   "type": "module",
   "main": "src/index.ts",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "buffer": "6.0.3",
-    "@stellar/stellar-sdk": "13.0.0"
+    "@stellar/stellar-sdk": "13.1.0"
   },
   "devDependencies": {
     "typescript": "5.7.2"

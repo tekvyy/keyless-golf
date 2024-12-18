@@ -114,7 +114,7 @@
 			}
 
 			const { sequence } = await account.rpc.getLatestLedger()
-			const at = await account.addSecp256r1(id, pk, new Map(), SignerStore.Temporary, sequence + 518_400);
+			const at = await account.addSecp256r1(id, pk, undefined, SignerStore.Temporary, sequence + 518_400);
 
 			await account.sign(at, { keyId: adminSigner });
 			const res = await server.send(at.built!);
@@ -133,15 +133,14 @@
 		const pubkey = PUBLIC; // prompt('Enter public key');
 
 		if (pubkey) {
-			const signer_limits: SignerLimits = new Map();
+			const signer_limits = undefined;
+
+			// const signer_limits: SignerLimits = new Map();
 			// const signer_keys: SignerKey[] = [];
 
-			// signer_keys.push({
-			// 	tag: "Policy",
-			// 	values: [SAMPLE_POLICY],
-			// });
+			// signer_keys.push(SignerKey.Policy(SAMPLE_POLICY));
 
-			// signer_limits[0].set(NATIVE_SAC, signer_keys);
+			// signer_limits.set(NATIVE_SAC, signer_keys);
 
 			const at = await account.addEd25519(pubkey, signer_limits, SignerStore.Temporary);
 

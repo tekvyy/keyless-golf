@@ -4,7 +4,7 @@ export STELLAR_ACCOUNT=default
 # export STELLAR_ACCOUNT=live
 
 # TESTNET
-export SMART_WALLET_WASM=96047ff2acea358b6515e8fed2e5fbcfdddffb0f8bdac7852d5e5b3920ebaf6f
+export SMART_WALLET_WASM=7a84f35fa9612d331ddf013b295b6ffde1a64e5e4b37b29d5cd090f385aefa1b
 
 build:
 	rm -rf out/

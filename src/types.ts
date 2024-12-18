@@ -24,7 +24,7 @@ export class SignerKey {
     }
 }
 
-export type SignerLimits = Map<string, SignerKey[] | undefined>
+export type SignerLimits = Map<string, SignerKey[] | undefined> | undefined
 
 export enum SignerStore {
     Persistent = 'Persistent',

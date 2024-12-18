@@ -55,8 +55,8 @@ export class PasskeyKit extends PasskeyBase {
                     values: [
                         keyId,
                         publicKey,
-                        undefined,
-                        [new Map()],
+                        [undefined],
+                        [undefined],
                         { tag: 'Persistent', values: undefined },
                     ]
                 }
@@ -445,7 +445,7 @@ export class PasskeyKit extends PasskeyBase {
                 values: [
                     Buffer.from(keyId),
                     Buffer.from(publicKey),
-                    expiration,
+                    [expiration],
                     this.getSignerLimits(limits),
                     { tag: store, values: undefined },
                 ],
@@ -458,7 +458,7 @@ export class PasskeyKit extends PasskeyBase {
                 tag: "Ed25519",
                 values: [
                     Keypair.fromPublicKey(publicKey).rawPublicKey(),
-                    expiration,
+                    [expiration],
                     this.getSignerLimits(limits),
                     { tag: store, values: undefined },
                 ],
@@ -471,7 +471,7 @@ export class PasskeyKit extends PasskeyBase {
                 tag: "Policy",
                 values: [
                     policy,
-                    expiration,
+                    [expiration],
                     this.getSignerLimits(limits),
                     { tag: store, values: undefined },
                 ],
@@ -485,6 +485,9 @@ export class PasskeyKit extends PasskeyBase {
     */
 
     private getSignerLimits(limits: SignerLimits) {
+        if (!limits)
+            return [undefined] as SDKSignerLimits
+
         const sdk_limits: SDKSignerLimits = [new Map()]
 
         for (const [contract, signer_keys] of limits.entries()) {
@@ -500,7 +503,7 @@ export class PasskeyKit extends PasskeyBase {
                 }
             }
 
-            sdk_limits[0].set(contract, sdk_signer_keys)
+            sdk_limits[0]?.set(contract, sdk_signer_keys)
         }
 
         return sdk_limits
