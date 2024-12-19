@@ -258,6 +258,10 @@ export class PasskeyKit extends PasskeyBase {
                 tag: "Policy",
                 values: [policy]
             }
+            val = {
+                tag: "Policy",
+                values: undefined,
+            }
         }
 
         // Sign with the keypair as an ed25519 signer
