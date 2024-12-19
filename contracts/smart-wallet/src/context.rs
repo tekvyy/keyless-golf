@@ -16,6 +16,10 @@ pub fn verify_context(
     match &signer_limits.0 {
         None => true, // Signer has no limits, it can do anything
         Some(signer_limits) => {
+            if signer_limits.is_empty() {
+                return true;
+            }
+
             match context {
                 Context::Contract(ContractContext {
                     contract,
