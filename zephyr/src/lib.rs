@@ -2,7 +2,9 @@ use base64::{
     engine::general_purpose::URL_SAFE, engine::general_purpose::URL_SAFE_NO_PAD, Engine as _,
 };
 use serde::{Deserialize, Serialize};
-use smart_wallet_interface::types::{SignerExpiration, SignerKey, SignerLimits, SignerStorage, SignerVal};
+use smart_wallet_interface::types::{
+    SignerExpiration, SignerKey, SignerLimits, SignerStorage, SignerVal,
+};
 use stellar_strkey::{ed25519, Strkey};
 use types::{
     Signers, SignersActive, SignersAddress, SignersKeyValLimitsExpStorage,

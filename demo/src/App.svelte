@@ -16,7 +16,7 @@
 	// - and admin, basic and policy
 	// - full visual support for admin, basic and policy keys
 
-	const ADMIN_KEY = "AAAAEAAAAAEAAAABAAAAEQAAAAEAAAAA"; // TODO very rough until we're actually parsing the limits object
+	const ADMIN_KEY = "AAAAEAAAAAEAAAABAAAAAQ=="; // TODO very rough until we're actually parsing the limits object
 	const NATIVE_SAC =
 		"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC";
 	const SAMPLE_POLICY =
@@ -63,6 +63,7 @@
 			await getWalletSigners();
 			await fundWallet();
 		} catch (err: any) {
+			console.error(err);
 			alert(err.message);
 		}
 	}
@@ -84,6 +85,7 @@
 			await getWalletBalance();
 			await getWalletSigners();
 		} catch (err: any) {
+			console.error(err);
 			// alert(err.message)
 		}
 	}
@@ -126,6 +128,7 @@
 			keyName = "";
 			// keyAdmin = false;
 		} catch (err: any) {
+			console.error(err);
 			alert(err.message);
 		}
 	}
@@ -196,6 +199,7 @@
 
 			await getWalletSigners();
 		} catch (err: any) {
+			console.error(err);
 			alert(err.message);
 		}
 	}
