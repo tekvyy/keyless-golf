@@ -1,12 +1,12 @@
 import { Client as PasskeyClient, type Signature, type SignerKey as SDKSignerKey, type SignerLimits as SDKSignerLimits } from 'passkey-kit-sdk'
-import { StrKey, hash, xdr, Keypair, Address } from '@stellar/stellar-sdk/minimal'
+import { StrKey, hash, xdr, Keypair, Address, TransactionBuilder, Operation } from '@stellar/stellar-sdk/minimal'
 import type { AuthenticatorAttestationResponseJSON, AuthenticatorSelectionCriteria } from "@simplewebauthn/types"
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser"
 import { Buffer } from 'buffer'
 import base64url from 'base64url'
 import type { SignerKey, SignerLimits, SignerStore } from './types'
 import { PasskeyBase } from './base'
-import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type Tx } from '@stellar/stellar-sdk/minimal/contract'
+import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type AssembledTransactionOptions, type Tx } from '@stellar/stellar-sdk/minimal/contract'
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
 export class PasskeyKit extends PasskeyBase {
@@ -396,10 +396,20 @@ export class PasskeyKit extends PasskeyBase {
             expiration?: number
         }
     ) {
-        if (typeof txn === 'string') {
-            txn = AssembledTransaction.fromXDR(this.wallet!.options, txn, this.wallet!.spec)
-        } else if (!(txn instanceof AssembledTransaction)) {
-            txn = AssembledTransaction.fromXDR(this.wallet!.options, txn.toXDR(), this.wallet!.spec)
+        if (!(txn instanceof AssembledTransaction)) {
+            let tx = typeof txn === 'string' ? txn : txn.toXDR()
+
+            try {
+                txn = AssembledTransaction.fromXDR(this.wallet!.options, tx, this.wallet!.spec)
+            } catch {
+                const built = TransactionBuilder.fromXDR(tx, this.networkPassphrase);
+                const operation = built.operations[0] as Operation.InvokeHostFunction;
+
+                txn = await AssembledTransaction.buildWithOp<T>(
+                    Operation.invokeHostFunction({ func: operation.func }), 
+                    this.wallet!.options as AssembledTransactionOptions<T>
+                );
+            }
         }
 
         await txn.signAuthEntries({
