@@ -397,13 +397,11 @@ export class PasskeyKit extends PasskeyBase {
         }
     ) {
         if (!(txn instanceof AssembledTransaction)) {
-            txn = typeof txn === 'string' ? txn : txn.toXDR()
-
             try {
-                txn = AssembledTransaction.fromXDR(this.wallet!.options, txn, this.wallet!.spec)
+                txn = AssembledTransaction.fromXDR(this.wallet!.options, typeof txn === 'string' ? txn : txn.toXDR(), this.wallet!.spec)
             } catch {
                 if (!(txn instanceof AssembledTransaction)) {
-                    const built = TransactionBuilder.fromXDR(txn, this.networkPassphrase);
+                    const built = TransactionBuilder.fromXDR(typeof txn === 'string' ? txn : txn.toXDR(), this.networkPassphrase);
                     const operation = built.operations[0] as Operation.InvokeHostFunction;
 
                     txn = await AssembledTransaction.buildWithOp<T>(
