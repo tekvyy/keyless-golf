@@ -39,7 +39,12 @@ export class PasskeyKit extends PasskeyBase {
         super(rpcUrl)
 
         this.networkPassphrase = networkPassphrase
-        this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from(this.networkPassphrase)))
+        // this account exists as the seed source for deploying new wallets
+        // not using the genesis wallet as on mainnet the account has no usable signers
+        // there's a chance this isn't the best move and should instead be a constructor variable
+        // alternatively when we create a new wallet we shouldn't inherit the source as the auth entry signer
+        // Keypair.fromRawEd25519Seed(hash(Buffer.from(this.networkPassphrase)))
+        this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from('kalepail')));
         this.walletPublicKey = this.walletKeypair.publicKey()
         this.walletWasmHash = walletWasmHash
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
@@ -130,9 +135,10 @@ export class PasskeyKit extends PasskeyBase {
     public async connectWallet(opts?: {
         rpId?: string,
         keyId?: string | Uint8Array,
-        getContractId?: (keyId: string) => Promise<string | undefined>
+        getContractId?: (keyId: string) => Promise<string | undefined>,
+        walletPublicKey?: string // TEMP for backwards compatibility for when we seeded wallets from a factory address
     }) {
-        let { keyId, rpId, getContractId } = opts || {}
+        let { keyId, rpId, getContractId, walletPublicKey } = opts || {}
         let keyIdBuffer: Buffer
 
         if (!keyId) {
@@ -158,17 +164,7 @@ export class PasskeyKit extends PasskeyBase {
             this.keyId = keyId
 
         // Check for the contractId on-chain as a derivation from the keyId. This is the easiest and "cheapest" check however it will only work for the initially deployed passkey if it was used as derivation
-        let contractId: string | undefined = StrKey.encodeContract(hash(xdr.HashIdPreimage.envelopeTypeContractId(
-            new xdr.HashIdPreimageContractId({
-                networkId: hash(Buffer.from(this.networkPassphrase)),
-                contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAddress(
-                    new xdr.ContractIdPreimageFromAddress({
-                        address: Address.fromString(this.walletPublicKey).toScAddress(),
-                        salt: hash(keyIdBuffer),
-                    })
-                )
-            })
-        ).toXDR()));
+        let contractId: string | undefined = this.encodeContract(this.walletPublicKey, keyIdBuffer);
 
         // attempt passkey id derivation
         try {
@@ -179,6 +175,19 @@ export class PasskeyKit extends PasskeyBase {
         catch {
             contractId = getContractId && await getContractId(keyId)
         }
+
+        ////
+        // TEMP for backwards compatibility for when we seeded wallets from a factory address
+        if (!contractId && walletPublicKey) {
+            contractId = this.encodeContract(walletPublicKey, keyIdBuffer);
+
+            try {
+                await this.rpc.getContractData(contractId, xdr.ScVal.scvLedgerKeyContractInstance())
+            } catch {
+                contractId = undefined
+            }
+        }
+        ////
 
         if (!contractId)
             throw new Error('Failed to connect wallet')
@@ -548,6 +557,22 @@ export class PasskeyKit extends PasskeyBase {
         }
 
         return signer_key
+    }
+
+    private encodeContract(walletPublicKey: string, keyIdBuffer: Buffer) {
+        let contractId: string | undefined = StrKey.encodeContract(hash(xdr.HashIdPreimage.envelopeTypeContractId(
+            new xdr.HashIdPreimageContractId({
+                networkId: hash(Buffer.from(this.networkPassphrase)),
+                contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                    new xdr.ContractIdPreimageFromAddress({
+                        address: Address.fromString(walletPublicKey).toScAddress(),
+                        salt: hash(keyIdBuffer),
+                    })
+                )
+            })
+        ).toXDR()));
+
+        return contractId
     }
 
     private async getPublicKey(response: AuthenticatorAttestationResponseJSON) {

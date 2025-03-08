@@ -1,10 +1,11 @@
-import { Transaction, xdr, Networks, Operation } from "@stellar/stellar-sdk/minimal"
+import { xdr } from "@stellar/stellar-sdk/minimal"
 import { PasskeyBase } from "./base"
 import base64url from "base64url"
 import type { Tx } from "@stellar/stellar-sdk/minimal/contract"
 import type { Signer } from "./types"
 import { AssembledTransaction } from "@stellar/stellar-sdk/minimal/contract"
 import { Durability } from "@stellar/stellar-sdk/minimal/rpc"
+import { version } from '../package.json'
 
 export class PasskeyServer extends PasskeyBase {
     private launchtubeJwt: string | undefined
@@ -149,7 +150,7 @@ export class PasskeyServer extends PasskeyBase {
         - Add a method for getting a paginated or filtered list of all a wallet's events
     */
 
-    public async send<T>(txn: AssembledTransaction<T> | Tx | string, fee?: number) {
+    public async send<T>(txn: AssembledTransaction<T> | Tx | string, fee?: number, headers?: Record<string, string>) {
         if (!this.launchtubeUrl || !this.launchtubeJwt)
             throw new Error('Launchtube service not configured')
 
@@ -170,11 +171,14 @@ export class PasskeyServer extends PasskeyBase {
             method: 'POST',
             headers: {
                 authorization: `Bearer ${this.launchtubeJwt}`,
+                'X-Client-Name': 'passkey-kit',
+                'X-Client-Version': version,
+                ...headers
             },
             body: data
         }).then(async (res) => {
             if (res.ok)
-                return res.json()
+            return res.json()
             else throw await res.json()
         })
     }

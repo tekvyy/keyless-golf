@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@simplewebauthn/browser':
-        specifier: ^13.0.0
-        version: 13.0.0
+        specifier: ^13.1.0
+        version: 13.1.0
       '@stellar/stellar-sdk':
         specifier: ^13.1.0
         version: 13.1.0
@@ -34,11 +34,11 @@ importers:
         specifier: ^12.0.0
         version: 12.0.0
       '@types/node':
-        specifier: ^22.10.2
-        version: 22.10.5
+        specifier: ^22.13.6
+        version: 22.13.6
       typescript:
-        specifier: ^5.7.2
-        version: 5.7.2
+        specifier: ^5.8.2
+        version: 5.8.2
 
   packages/passkey-kit-sdk:
     dependencies:
@@ -68,8 +68,8 @@ importers:
 
 packages:
 
-  '@simplewebauthn/browser@13.0.0':
-    resolution: {integrity: sha512-7d/+gxoFoDQxq2EkLl/PuTIQ/rnSrA3bmr8L2Ij7bRyicJoCJX/NDGUNExyctB9nSDrEkkcrJMDkwpCYOGU3Lg==}
+  '@simplewebauthn/browser@13.1.0':
+    resolution: {integrity: sha512-WuHZ/PYvyPJ9nxSzgHtOEjogBhwJfC8xzYkPC+rR/+8chl/ft4ngjiK8kSU5HtRJfczupyOh33b25TjYbvwAcg==}
 
   '@simplewebauthn/types@12.0.0':
     resolution: {integrity: sha512-q6y8MkoV8V8jB4zzp18Uyj2I7oFp2/ONL8c3j8uT06AOWu3cIChc1au71QYHrP2b+xDapkGTiv+9lX7xkTlAsA==}
@@ -83,8 +83,8 @@ packages:
   '@stellar/stellar-sdk@13.1.0':
     resolution: {integrity: sha512-ARQkUdyGefXdTgwSF0eONkzv/geAqUfyfheJ9Nthz6GAr5b41fNwWW9UtE8JpXC4IpvE3t5elIUN5hKJzASN9w==}
 
-  '@types/node@22.10.5':
-    resolution: {integrity: sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==}
+  '@types/node@22.13.6':
+    resolution: {integrity: sha512-GYmF65GI7417CpZXsEXMjT8goQQDnpRnJnDw6jIYa+le3V/lMazPZ4vZmK1B/9R17fh2VLr2zuy9d/h5xgrLAg==}
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
@@ -186,6 +186,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.8.2:
+    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
 
@@ -194,7 +199,7 @@ packages:
 
 snapshots:
 
-  '@simplewebauthn/browser@13.0.0': {}
+  '@simplewebauthn/browser@13.1.0': {}
 
   '@simplewebauthn/types@12.0.0': {}
 
@@ -224,7 +229,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@types/node@22.10.5':
+  '@types/node@22.13.6':
     dependencies:
       undici-types: 6.20.0
 
@@ -309,6 +314,8 @@ snapshots:
   tweetnacl@1.0.3: {}
 
   typescript@5.7.2: {}
+
+  typescript@5.8.2: {}
 
   undici-types@6.20.0: {}
 
