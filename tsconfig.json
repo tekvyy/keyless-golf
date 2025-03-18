@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./types",
+    "rootDir": "./src",
     // Enable latest features
     "target": "ESNext",
     "module": "ESNext",
@@ -22,6 +23,6 @@
     "strictNullChecks": true,
   },
   "include": [
-    "src/*",
+    "src",
   ],
 }
