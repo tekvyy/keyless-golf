@@ -136,7 +136,9 @@ export class PasskeyKit extends PasskeyBase {
         rpId?: string,
         keyId?: string | Uint8Array,
         getContractId?: (keyId: string) => Promise<string | undefined>,
-        walletPublicKey?: string // TEMP for backwards compatibility for when we seeded wallets from a factory address
+        // TEMP for backwards compatibility for when we seeded wallets from a factory address
+        // Consider putting this somewhere else??
+        walletPublicKey?: string
     }) {
         let { keyId, rpId, getContractId, walletPublicKey } = opts || {}
         let keyIdBuffer: Buffer

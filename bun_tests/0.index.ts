@@ -1,8 +1,9 @@
-import { Account, nativeToScVal, Operation, SorobanRpc, StrKey, TransactionBuilder } from '@stellar/stellar-sdk';
+import { Account, nativeToScVal, Operation, StrKey, TransactionBuilder } from '@stellar/stellar-sdk';
+import { Server } from '@stellar/stellar-sdk/rpc';
 
 const networkPassphrase = 'Test SDF Network ; September 2015'
 const rpcUrl = 'https://soroban-testnet.stellar.org'
-const rpc = new SorobanRpc.Server(rpcUrl)
+const rpc = new Server(rpcUrl)
 
 const mockPubkey = StrKey.encodeEd25519PublicKey(Buffer.alloc(32))
 const mockSource = new Account(mockPubkey, '0')

@@ -7,12 +7,15 @@ import { AssembledTransaction } from "@stellar/stellar-sdk/minimal/contract"
 import { Durability } from "@stellar/stellar-sdk/minimal/rpc"
 import { version } from '../package.json'
 
+// TODO set default headers in constructor
+
 export class PasskeyServer extends PasskeyBase {
     private launchtubeJwt: string | undefined
     private mercuryJwt: string | undefined
     private mercuryKey: string | undefined
 
     public launchtubeUrl: string | undefined
+    public launchtubeHeaders: Record<string, string> | undefined
     public mercuryProjectName: string | undefined
     public mercuryUrl: string | undefined
 
@@ -20,6 +23,7 @@ export class PasskeyServer extends PasskeyBase {
         rpcUrl?: string,
         launchtubeUrl?: string,
         launchtubeJwt?: string,
+        launchtubeHeaders?: Record<string, string>
         mercuryProjectName?: string,
         mercuryUrl?: string,
         mercuryJwt?: string,
@@ -29,6 +33,7 @@ export class PasskeyServer extends PasskeyBase {
             rpcUrl,
             launchtubeUrl,
             launchtubeJwt,
+            launchtubeHeaders,
             mercuryProjectName,
             mercuryUrl,
             mercuryJwt,
@@ -42,6 +47,9 @@ export class PasskeyServer extends PasskeyBase {
 
         if (launchtubeJwt)
             this.launchtubeJwt = launchtubeJwt
+
+        if (launchtubeHeaders)
+            this.launchtubeHeaders = launchtubeHeaders
 
         if (mercuryProjectName)
             this.mercuryProjectName = mercuryProjectName
@@ -150,8 +158,11 @@ export class PasskeyServer extends PasskeyBase {
         - Add a method for getting a paginated or filtered list of all a wallet's events
     */
 
-    public async send<T>(txn: AssembledTransaction<T> | Tx | string, fee?: number, headers?: Record<string, string>) {
-        if (!this.launchtubeUrl || !this.launchtubeJwt)
+    public async send<T>(
+        txn: AssembledTransaction<T> | Tx | string, 
+        fee?: number,
+    ) {
+        if (!this.launchtubeUrl)
             throw new Error('Launchtube service not configured')
 
         const data = new FormData();
@@ -167,14 +178,17 @@ export class PasskeyServer extends PasskeyBase {
         if (fee)
             data.set('fee', fee.toString());
 
+        let lt_headers = Object.assign({
+            'X-Client-Name': 'passkey-kit',
+            'X-Client-Version': version,
+        }, this.launchtubeHeaders)
+
+        if (this.launchtubeJwt)
+            lt_headers.authorization = `Bearer ${this.launchtubeJwt}`
+
         return fetch(this.launchtubeUrl, {
             method: 'POST',
-            headers: {
-                authorization: `Bearer ${this.launchtubeJwt}`,
-                'X-Client-Name': 'passkey-kit',
-                'X-Client-Version': version,
-                ...headers
-            },
+            headers: lt_headers,
             body: data
         }).then(async (res) => {
             if (res.ok)
