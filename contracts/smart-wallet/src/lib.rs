@@ -67,7 +67,9 @@ impl SmartWalletInterface for Contract {
         env.current_contract_address().require_auth();
 
         let (signer_key, signer_val, signer_storage) = process_signer(signer);
+
         store_signer(&env, &signer_key, &signer_val, &signer_storage, true);
+
         extend_instance(&env);
 
         env.events().publish(

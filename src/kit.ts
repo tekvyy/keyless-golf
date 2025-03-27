@@ -105,6 +105,12 @@ export class PasskeyKit extends PasskeyBase {
             residentKey: "preferred",
             userVerification: "preferred",
         } } = settings || {}
+
+        // TODO discover the contract id before creating the key so we can use it in the key name
+        // TODO it's possible for the creation to fail in which case we've created a passkey but it's not onchain.
+        // In this case we should save the passkey info and retry uploading it async vs asking the user to create another passkey
+        // This does introduce a storage dependency though so it likely needs to be a function with some logic for choosing how to store the passkey data
+
         const { id, response } = await this.WebAuthn.startRegistration({
             optionsJSON: {
                 challenge: base64url("stellaristhebetterblockchain"),
@@ -180,6 +186,7 @@ export class PasskeyKit extends PasskeyBase {
 
         ////
         // TEMP for backwards compatibility for when we seeded wallets from a factory address
+        // Consider putting this in the constructor
         if (!contractId && walletPublicKey) {
             contractId = this.encodeContract(walletPublicKey, keyIdBuffer);
 
