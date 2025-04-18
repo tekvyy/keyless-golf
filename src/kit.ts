@@ -9,6 +9,8 @@ import { PasskeyBase } from './base'
 import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type AssembledTransactionOptions, type Tx } from '@stellar/stellar-sdk/minimal/contract'
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
+// TODO default to 30 second timeouts
+
 export class PasskeyKit extends PasskeyBase {
     declare rpc: Server
     declare rpcUrl: string
@@ -16,6 +18,7 @@ export class PasskeyKit extends PasskeyBase {
     private walletKeypair: Keypair 
     private walletPublicKey: string 
     private walletWasmHash: string
+    private timeoutInSeconds: number
     private WebAuthn: {
         startRegistration: typeof startRegistration,
         startAuthentication: typeof startAuthentication
@@ -29,6 +32,7 @@ export class PasskeyKit extends PasskeyBase {
         rpcUrl: string,
         networkPassphrase: string,
         walletWasmHash: string,
+        timeoutInSeconds?: number,
         WebAuthn?: {
             startRegistration: typeof startRegistration,
             startAuthentication: typeof startAuthentication
@@ -47,6 +51,7 @@ export class PasskeyKit extends PasskeyBase {
         this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from('kalepail')));
         this.walletPublicKey = this.walletKeypair.publicKey()
         this.walletWasmHash = walletWasmHash
+        this.timeoutInSeconds = options.timeoutInSeconds || DEFAULT_TIMEOUT
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
     }
 
@@ -72,6 +77,7 @@ export class PasskeyKit extends PasskeyBase {
                 networkPassphrase: this.networkPassphrase,
                 publicKey: this.walletPublicKey,
                 salt: hash(keyId),
+                timeoutInSeconds: this.timeoutInSeconds,
             }
         )
 
@@ -464,6 +470,8 @@ export class PasskeyKit extends PasskeyBase {
     public remove(signer: SignerKey) {
         return this.wallet!.remove_signer({
             signer_key: this.getSignerKey(signer)
+        }, {
+            timeoutInSeconds: this.timeoutInSeconds,
         });
     }
 
@@ -482,6 +490,8 @@ export class PasskeyKit extends PasskeyBase {
                     { tag: store, values: undefined },
                 ],
             },
+        }, {
+            timeoutInSeconds: this.timeoutInSeconds,
         });
     }
     private ed25519(publicKey: string, limits: SignerLimits, store: SignerStore, fn: 'add_signer' | 'update_signer', expiration?: number) {
@@ -495,6 +505,8 @@ export class PasskeyKit extends PasskeyBase {
                     { tag: store, values: undefined },
                 ],
             },
+        }, {
+            timeoutInSeconds: this.timeoutInSeconds,
         });
     }
     private policy(policy: string, limits: SignerLimits, store: SignerStore, fn: 'add_signer' | 'update_signer', expiration?: number) {
@@ -508,6 +520,8 @@ export class PasskeyKit extends PasskeyBase {
                     { tag: store, values: undefined },
                 ],
             },
+        }, {
+            timeoutInSeconds: this.timeoutInSeconds,
         });
     }
 

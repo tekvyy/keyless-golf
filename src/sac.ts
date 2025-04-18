@@ -23,7 +23,7 @@ export class SACClient extends PasskeyBase {
         return new SacClient({
             contractId: SACContractId,
             networkPassphrase: this.networkPassphrase,
-            rpcUrl: this.rpcUrl
+            rpcUrl: this.rpcUrl,
         })
     }
 }

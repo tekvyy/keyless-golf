@@ -531,6 +531,7 @@ export class Client extends ContractClient {
         salt?: Buffer | Uint8Array;
         /** The format used to decode `wasmHash`, if it's provided as a string. */
         format?: "hex" | "base64";
+        address?: string;
       }
   ): Promise<AssembledTransaction<T>> {
     return ContractClient.deploy(null, options)
