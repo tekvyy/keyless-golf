@@ -10,6 +10,7 @@ import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type AssembledT
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
 // TODO default to 30 second timeouts
+const LAUNCHTUBE_TIMEOUT = 30
 
 export class PasskeyKit extends PasskeyBase {
     declare rpc: Server
@@ -51,7 +52,7 @@ export class PasskeyKit extends PasskeyBase {
         this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from('kalepail')));
         this.walletPublicKey = this.walletKeypair.publicKey()
         this.walletWasmHash = walletWasmHash
-        this.timeoutInSeconds = options.timeoutInSeconds || DEFAULT_TIMEOUT
+        this.timeoutInSeconds = options.timeoutInSeconds || Math.min(DEFAULT_TIMEOUT, LAUNCHTUBE_TIMEOUT)
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
     }
 
