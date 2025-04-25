@@ -9,8 +9,6 @@ import { PasskeyBase } from './base'
 import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type AssembledTransactionOptions, type Tx } from '@stellar/stellar-sdk/minimal/contract'
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
-// TODO default to 30 second timeouts
-
 export class PasskeyKit extends PasskeyBase {
     declare rpc: Server
     declare rpcUrl: string
@@ -51,7 +49,7 @@ export class PasskeyKit extends PasskeyBase {
         this.walletKeypair = Keypair.fromRawEd25519Seed(hash(Buffer.from('kalepail')));
         this.walletPublicKey = this.walletKeypair.publicKey()
         this.walletWasmHash = walletWasmHash
-        this.timeoutInSeconds = options.timeoutInSeconds || DEFAULT_TIMEOUT
+        this.timeoutInSeconds = options.timeoutInSeconds || 30 // Launchtube requires <= 30 second timeout so let's default to that
         this.WebAuthn = WebAuthn || { startRegistration, startAuthentication }
     }
 
@@ -242,7 +240,7 @@ export class PasskeyKit extends PasskeyBase {
 
             if (!expiration) {
                 const { sequence } = await this.rpc.getLatestLedger()
-                expiration = sequence + DEFAULT_TIMEOUT / 5;
+                expiration = sequence + this.timeoutInSeconds / 5; // assumes 5 second ledger time
             }
         }
 
