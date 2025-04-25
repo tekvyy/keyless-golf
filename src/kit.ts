@@ -240,7 +240,7 @@ export class PasskeyKit extends PasskeyBase {
 
             if (!expiration) {
                 const { sequence } = await this.rpc.getLatestLedger()
-                expiration = sequence + DEFAULT_TIMEOUT / 5;
+                expiration = sequence + this.timeoutInSeconds / 5; // assumes 5 second ledger time
             }
         }
 
