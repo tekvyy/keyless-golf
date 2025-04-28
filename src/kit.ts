@@ -1,20 +1,20 @@
 import { Client as PasskeyClient, type Signature, type SignerKey as SDKSignerKey, type SignerLimits as SDKSignerLimits } from 'passkey-kit-sdk'
 import { StrKey, hash, xdr, Keypair, Address, TransactionBuilder, Operation } from '@stellar/stellar-sdk/minimal'
-import type { AuthenticatorAttestationResponseJSON, AuthenticatorSelectionCriteria } from "@simplewebauthn/types"
+import type { AuthenticationResponseJSON, AuthenticatorAttestationResponseJSON, AuthenticatorSelectionCriteria } from "@simplewebauthn/types"
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser"
 import { Buffer } from 'buffer'
 import base64url from 'base64url'
 import type { SignerKey, SignerLimits, SignerStore } from './types'
 import { PasskeyBase } from './base'
-import { AssembledTransaction, basicNodeSigner, DEFAULT_TIMEOUT, type AssembledTransactionOptions, type Tx } from '@stellar/stellar-sdk/minimal/contract'
+import { AssembledTransaction, basicNodeSigner, type AssembledTransactionOptions, type Tx } from '@stellar/stellar-sdk/minimal/contract'
 import type { Server } from '@stellar/stellar-sdk/minimal/rpc'
 
 export class PasskeyKit extends PasskeyBase {
     declare rpc: Server
     declare rpcUrl: string
 
-    private walletKeypair: Keypair 
-    private walletPublicKey: string 
+    private walletKeypair: Keypair
+    private walletPublicKey: string
     private walletWasmHash: string
     private timeoutInSeconds: number
     private WebAuthn: {
@@ -115,7 +115,7 @@ export class PasskeyKit extends PasskeyBase {
         // In this case we should save the passkey info and retry uploading it async vs asking the user to create another passkey
         // This does introduce a storage dependency though so it likely needs to be a function with some logic for choosing how to store the passkey data
 
-        const { id, response } = await this.WebAuthn.startRegistration({
+        const rawResponse = await this.WebAuthn.startRegistration({
             optionsJSON: {
                 challenge: base64url("stellaristhebetterblockchain"),
                 rp: {
@@ -131,11 +131,13 @@ export class PasskeyKit extends PasskeyBase {
                 pubKeyCredParams: [{ alg: -7, type: "public-key" }],
             }
         });
+        const { id, response } = rawResponse
 
         if (!this.keyId)
             this.keyId = id;
 
         return {
+            rawResponse,
             keyId: base64url.toBuffer(id),
             keyIdBase64: id,
             publicKey: await this.getPublicKey(response),
@@ -150,11 +152,12 @@ export class PasskeyKit extends PasskeyBase {
         // Consider putting this somewhere else??
         walletPublicKey?: string
     }) {
-        let { keyId, rpId, getContractId, walletPublicKey } = opts || {}
+        let { rpId, keyId, getContractId, walletPublicKey } = opts || {}
         let keyIdBuffer: Buffer
+        let rawResponse: AuthenticationResponseJSON | undefined;
 
         if (!keyId) {
-            const response = await this.WebAuthn.startAuthentication({
+            rawResponse = await this.WebAuthn.startAuthentication({
                 optionsJSON: {
                     challenge: base64url("stellaristhebetterblockchain"),
                     rpId,
@@ -162,7 +165,7 @@ export class PasskeyKit extends PasskeyBase {
                 }
             });
 
-            keyId = response.id
+            keyId = rawResponse.id
         }
 
         if (keyId instanceof Uint8Array) {
@@ -212,6 +215,7 @@ export class PasskeyKit extends PasskeyBase {
         })
 
         return {
+            rawResponse,
             keyId: keyIdBuffer,
             keyIdBase64: keyId,
             contractId
@@ -427,7 +431,7 @@ export class PasskeyKit extends PasskeyBase {
                     const operation = built.operations[0] as Operation.InvokeHostFunction;
 
                     txn = await AssembledTransaction.buildWithOp<T>(
-                        Operation.invokeHostFunction({ func: operation.func }), 
+                        Operation.invokeHostFunction({ func: operation.func }),
                         this.wallet!.options as AssembledTransactionOptions<T>
                     );
                 }
