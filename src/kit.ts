@@ -54,7 +54,7 @@ export class PasskeyKit extends PasskeyBase {
     }
 
     public async createWallet(app: string, user: string) {
-        const { keyId, keyIdBase64, publicKey } = await this.createKey(app, user)
+        const { rawResponse, keyId, keyIdBase64, publicKey } = await this.createKey(app, user)
 
         const at = await PasskeyClient.deploy(
             {
@@ -92,6 +92,7 @@ export class PasskeyKit extends PasskeyBase {
         })
 
         return {
+            rawResponse,
             keyId,
             keyIdBase64,
             contractId,
