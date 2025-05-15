@@ -329,6 +329,10 @@
 			adminKeys.find(({ key }) => keyId === key) || adminKeys[0]
 		).key;
 	}
+	
+	function goToGame() {
+		window.location.href = "/game.html";
+	}
 </script>
 
 <main>
@@ -353,6 +357,8 @@
 		<button on:click={policyTransfer}>Policy Transfer</button>
 		<br />
 		<button on:click={multisigTransfer}>Multisig Transfer</button>
+		<br />
+		<button on:click={goToGame} style="margin-top: 20px; background-color: #ff8c00; font-weight: bold;">Play Passkey Golf!</button>
 
 		<form on:submit|preventDefault>
 			<ul style="list-style: none; padding: 0;">
@@ -425,3 +431,46 @@
 		></iframe>
 	{/if} -->
 </main>
+
+<style>
+	main {
+		padding: 20px;
+		max-width: 1000px;
+		margin: 0 auto;
+	}
+	
+	button {
+		margin: 5px;
+		padding: 8px 12px;
+		border: none;
+		border-radius: 4px;
+		background-color: #3498db;
+		color: white;
+		cursor: pointer;
+	}
+	
+	button:hover {
+		background-color: #2980b9;
+	}
+	
+	ul {
+		padding: 0;
+		list-style-type: none;
+	}
+	
+	li {
+		margin-bottom: 10px;
+		padding: 10px;
+		border: 1px solid #eee;
+		border-radius: 4px;
+		background-color: #f9f9f9;
+	}
+	
+	input {
+		padding: 8px;
+		margin: 5px 0;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		width: 100%;
+	}
+</style>
