@@ -5,6 +5,12 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 export default defineConfig({
   plugins: [svelte()],
   build: {
-    target: "ESNext"
+    target: "ESNext",
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        game: 'public/game.html',
+      },
+    },
   },
 })

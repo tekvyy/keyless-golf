@@ -10,6 +10,7 @@
 	} from "./lib/common";
 	import { Keypair } from "@stellar/stellar-sdk/minimal";
     import { SignerStore, SignerKey, type SignerLimits, type Signer } from "passkey-kit";
+    import Game from "./Game.svelte";
 
 	// TODO need to support two toggles:
 	// - between temp and persistent
@@ -31,7 +32,7 @@
 	let signers: Signer[] = [];
 
 	let keyName: string = "";
-	// let keyAdmin: boolean = false;
+    let showGame = false;
 
 	if (localStorage.hasOwnProperty("sp:keyId")) {
 		keyId = localStorage.getItem("sp:keyId")!;
@@ -331,10 +332,21 @@
 	}
 	
 	function goToGame() {
-		window.location.href = "/game.html";
+		showGame = true;
+	}
+	
+	function returnFromGame() {
+	    showGame = false;
 	}
 </script>
 
+{#if showGame}
+    <Game 
+        walletConnected={!!contractId} 
+        contractId={contractId || ""} 
+        onReturn={returnFromGame} 
+    />
+{:else}
 <main>
 	<button on:click={register}>Register</button>
 	<button on:click={() => connect()}>Sign In</button>
@@ -369,15 +381,6 @@
 						bind:value={keyName}
 					/>
 				</li>
-				<!-- <li>
-					<label for="admin">Make admin?</label>
-					<input
-						type="checkbox"
-						id="admin"
-						name="admin"
-						bind:checked={keyAdmin}
-					/>
-				</li> -->
 				<li>
 					<button on:click={() => addSigner()}>Add Signer</button>
 				</li>
@@ -410,33 +413,20 @@
 				<!-- TODO rethink {#if (limits !== ADMIN_KEY || admins > 1) && key !== keyId} -->
 				<button on:click={() => removeSigner(key, kind)}>Remove</button>
 				<!-- {/if} -->
-
-				<!-- TODO redo {#if limits === ADMIN_KEY && key !== adminSigner}
-					<button on:click={() => (adminSigner = key)}
-						>Set Active Admin</button
-					>
-				{:else if expired && key === account.keyId}
-					<button on:click={() => addSigner(val)}>Reload</button>
-				{/if} -->
 			</li>
 		{/each}
 	</ul>
-
-	<!-- {#if contractId}
-		<iframe
-			src="https://stellar.expert/explorer/testnet/contract/{contractId}"
-			frameborder="0"
-			width="1000"
-			height="600"
-		></iframe>
-	{/if} -->
 </main>
+{/if}
 
 <style>
 	main {
 		padding: 20px;
 		max-width: 1000px;
 		margin: 0 auto;
+		background-color: white;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 	
 	button {
@@ -447,6 +437,7 @@
 		background-color: #3498db;
 		color: white;
 		cursor: pointer;
+		font-weight: 500;
 	}
 	
 	button:hover {
@@ -464,6 +455,7 @@
 		border: 1px solid #eee;
 		border-radius: 4px;
 		background-color: #f9f9f9;
+		color: #333;
 	}
 	
 	input {
@@ -472,5 +464,11 @@
 		border: 1px solid #ddd;
 		border-radius: 4px;
 		width: 100%;
+		background-color: white;
+		color: #333;
+	}
+	
+	p {
+		color: #333;
 	}
 </style>

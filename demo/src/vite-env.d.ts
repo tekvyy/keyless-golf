@@ -17,9 +17,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
     readonly env: ImportMetaEnv;
 }
-
-interface Window {
-    app: {
-        GameConnector: any;
-    };
-}

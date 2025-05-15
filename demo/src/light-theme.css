@@ -1,0 +1,102 @@
+/* Light theme styles to override dark theme */
+body {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+input, select, textarea {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #2c3e50;
+}
+
+p, li, span, label, div {
+  color: #333;
+}
+
+.card, .container, .panel {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+button:disabled {
+  background-color: #95a5a6;
+}
+
+a {
+  color: #3498db;
+}
+
+a:hover {
+  color: #2980b9;
+}
+
+/* Override specific component styles */
+.room-manager, .game-room, .players-panel, .game-panel {
+  background-color: white;
+  color: #333;
+}
+
+.player-list li {
+  border-color: #eee;
+}
+
+.waiting-screen, .your-turn, .waiting-turn, .game-over {
+  color: #333;
+}
+
+.winner-announcement {
+  background-color: #f8f9fa;
+  border: 1px solid #eee;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.waiting {
+  background-color: #28a745;
+}
+
+.status-badge.playing {
+  background-color: #fd7e14;
+}
+
+.status-badge.completed {
+  background-color: #6c757d;
+}
+
+/* Improve contrast for table */
+table {
+  color: #333;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* Game elements */
+.game-container {
+  background-color: white;
+}
+
+.room-id {
+  background-color: #f8f9fa;
+  color: #333;
+}

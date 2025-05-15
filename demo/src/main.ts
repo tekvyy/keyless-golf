@@ -1,15 +1,15 @@
 import './app.css'
+import './light-theme.css'
 import App from './App.svelte'
-import GameConnector from './GameConnector.svelte'
+import Game from './Game.svelte'
 
-const app = new App({
-  target: document.getElementById('app')!,
-})
+// Check if we should display the game
+const urlParams = new URLSearchParams(window.location.search);
+const showGame = urlParams.get('game') === 'true';
+
+// Create the appropriate component
+const app = showGame 
+  ? new Game({ target: document.getElementById('app')! })
+  : new App({ target: document.getElementById('app')! });
 
 export default app
-
-// Expose GameConnector component for use in game.html
-// @ts-ignore - Make the component available in the global window object
-window.app = {
-  GameConnector
-}
