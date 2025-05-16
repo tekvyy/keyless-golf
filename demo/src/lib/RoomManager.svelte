@@ -40,11 +40,19 @@
       }
     }
     
-    // Set up auto-refresh of room list
-    const interval = setInterval(refreshRooms, 10000);
+    // Set up auto-refresh of room list (more frequent to ensure cross-browser visibility)
+    const interval = setInterval(refreshRooms, 3000);
+    
+    // Listen for storage events from other browser windows
+    window.addEventListener('storage', (event) => {
+      if (event.key?.includes('passkey-golf')) {
+        refreshRooms();
+      }
+    });
     
     return () => {
       clearInterval(interval);
+      window.removeEventListener('storage', () => {});
     };
   });
   
@@ -56,7 +64,7 @@
     }
   }
   
-  async function handleCreateRoom() {
+  function handleCreateRoom() {
     if (!walletConnected) {
       errorMessage = 'Connect your wallet to create a room';
       return;
@@ -76,7 +84,7 @@
     errorMessage = '';
     
     try {
-      // Create a new room
+      // Create a new room - now synchronous
       const room = createNewRoom(playerId, playerName, contractId, roomName);
       
       // Enter the room

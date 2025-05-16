@@ -6,6 +6,8 @@ import type { Signer } from "./types"
 import { AssembledTransaction } from "@stellar/stellar-sdk/minimal/contract"
 import { Durability } from "@stellar/stellar-sdk/minimal/rpc"
 import { version } from '../package.json'
+import { roomManager } from "./roomManager"
+import type { GameRoom, Player } from "./roomManager"
 
 // TODO set default headers in constructor
 
@@ -195,5 +197,107 @@ export class PasskeyServer extends PasskeyBase {
             return res.json()
             else throw await res.json()
         })
+    }
+
+    // Room Management Functions
+
+    /**
+     * Create a new game room
+     */
+    public createRoom(
+        hostId: string,
+        hostName: string,
+        walletAddress: string,
+        roomName: string,
+        maxPlayers: number = 4,
+        shotsPerPlayer: number = 3,
+        rewardAmount: number = 10_000_000 // 1 XLM
+    ): GameRoom {
+        return roomManager.createRoom(
+            hostId,
+            hostName,
+            walletAddress,
+            roomName,
+            maxPlayers,
+            shotsPerPlayer,
+            rewardAmount
+        );
+    }
+
+    /**
+     * Get a room by ID
+     */
+    public getRoom(roomId: string): GameRoom | null {
+        return roomManager.getRoom(roomId);
+    }
+
+    /**
+     * Get all active rooms
+     */
+    public getActiveRooms(): GameRoom[] {
+        return roomManager.getActiveRooms();
+    }
+
+    /**
+     * Add a player to a room
+     */
+    public addPlayerToRoom(roomId: string, player: Player): boolean {
+        return roomManager.addPlayerToRoom(roomId, player);
+    }
+
+    /**
+     * Remove a player from a room
+     */
+    public removePlayerFromRoom(roomId: string, playerId: string): boolean {
+        return roomManager.removePlayerFromRoom(roomId, playerId);
+    }
+
+    /**
+     * Update a player in a room
+     */
+    public updatePlayerInRoom(roomId: string, updatedPlayer: Player): boolean {
+        return roomManager.updatePlayerInRoom(roomId, updatedPlayer);
+    }
+
+    /**
+     * Update a room with partial data
+     */
+    public updateRoom(roomId: string, updates: Partial<GameRoom>): boolean {
+        return roomManager.updateRoom(roomId, updates);
+    }
+
+    /**
+     * Start a game in a room
+     */
+    public startGame(roomId: string): boolean {
+        return roomManager.startGame(roomId);
+    }
+
+    /**
+     * Move to the next player's turn
+     */
+    public nextTurn(roomId: string): boolean {
+        return roomManager.nextTurn(roomId);
+    }
+
+    /**
+     * Update a player's score
+     */
+    public updatePlayerScore(roomId: string, playerId: string, score: number): boolean {
+        return roomManager.updatePlayerScore(roomId, playerId, score);
+    }
+
+    /**
+     * Reset a game to start a new round
+     */
+    public resetGame(roomId: string): boolean {
+        return roomManager.resetGame(roomId);
+    }
+
+    /**
+     * Get the winner of a completed game
+     */
+    public getWinner(roomId: string): Player | null {
+        return roomManager.getWinner(roomId);
     }
 }

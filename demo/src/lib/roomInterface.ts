@@ -1,13 +1,12 @@
-// Interface for room management - bridges between localStorage and in-memory store
+// Interface for room management - bridges between client and server
 import type { GameRoom, Player } from './gameTypes';
 import * as roomStore from './roomStore';
 
-// Constants from the original implementation
-export const ROOM_STORAGE_KEY = 'passkey-golf-room';
+// Constants for client-side
 export const LOCAL_PLAYER_ID_KEY = 'passkey-golf-player-id';
 
-// Use in-memory store instead of localStorage
-const USE_IN_MEMORY_STORE = true;
+// Initialize room polling when module is imported
+roomStore.initializeRoomPolling();
 
 // Helper functions for room management
 export function generateRoomId(): string {
@@ -19,21 +18,18 @@ export function generatePlayerId(): string {
 }
 
 // Room management functions
-export function saveRoom(room: GameRoom): void {
-  if (USE_IN_MEMORY_STORE) {
-    roomStore.saveRoom(room);
-  } else {
-    localStorage.setItem(ROOM_STORAGE_KEY + '-' + room.id, JSON.stringify(room));
-  }
+export async function saveRoom(room: GameRoom): Promise<void> {
+  await roomStore.saveRoom(room);
 }
 
 export function getRoom(roomId: string): GameRoom | null {
-  if (USE_IN_MEMORY_STORE) {
-    return roomStore.getRoom(roomId);
-  } else {
-    const roomData = localStorage.getItem(ROOM_STORAGE_KEY + '-' + roomId);
-    return roomData ? JSON.parse(roomData) : null;
+  const room = roomStore.getRoom(roomId);
+  // Verify room data is valid
+  if (room && (!room.players || !Array.isArray(room.players))) {
+    console.error('Invalid room data - missing players array');
+    return null;
   }
+  return room;
 }
 
 export function createNewRoom(
@@ -42,6 +38,7 @@ export function createNewRoom(
   walletAddress: string,
   roomName: string
 ): GameRoom {
+  // Create room object
   const room: GameRoom = {
     id: generateRoomId(),
     name: roomName,
@@ -63,11 +60,21 @@ export function createNewRoom(
     created: Date.now(),
   };
   
-  saveRoom(room);
+  // Save room to server (don't wait for the async operation)
+  roomStore.saveRoom(room);
+  
+  // Directly return the room we just created
+  // This ensures the component gets valid data right away
   return room;
 }
 
 export function joinRoom(room: GameRoom, playerId: string, playerName: string, walletAddress: string): GameRoom {
+  // Validate room data
+  if (!room || !room.players || !Array.isArray(room.players)) {
+    throw new Error('Invalid room data');
+  }
+  
+  // Input validation
   if (room.players.length >= room.maxPlayers) {
     throw new Error('Room is full');
   }
@@ -76,17 +83,8 @@ export function joinRoom(room: GameRoom, playerId: string, playerName: string, w
     throw new Error('Game already in progress');
   }
   
-  // Check if player already in room
-  const existingPlayer = room.players.find(p => p.id === playerId);
-  if (existingPlayer) {
-    // Update player connection status if they're rejoining
-    existingPlayer.isConnected = true;
-    saveRoom(room);
-    return room;
-  }
-  
-  // Add player to room
-  room.players.push({
+  // Create player object
+  const player: Player = {
     id: playerId,
     name: playerName,
     walletAddress,
@@ -94,173 +92,99 @@ export function joinRoom(room: GameRoom, playerId: string, playerName: string, w
     shotsRemaining: room.shotsPerPlayer,
     isConnected: true,
     isCurrentTurn: false,
-  });
+  };
   
-  saveRoom(room);
-  return room;
+  // Add player to room on server (now synchronous)
+  const success = roomStore.addPlayerToRoom(room.id, player);
+  
+  if (!success) {
+    throw new Error('Failed to join room');
+  }
+  
+  // Get updated room from store (now synchronous)
+  const updatedRoom = roomStore.getRoom(room.id);
+  
+  if (!updatedRoom) {
+    throw new Error('Failed to get updated room');
+  }
+  
+  return updatedRoom;
 }
 
-export function leaveRoom(room: GameRoom, playerId: string): GameRoom {
-  if (USE_IN_MEMORY_STORE) {
-    roomStore.removePlayerFromRoom(room.id, playerId);
-    return getRoom(room.id) || { ...room, players: [] };
-  } else {
-    const playerIndex = room.players.findIndex(p => p.id === playerId);
-    
-    if (playerIndex === -1) {
-      return room;
-    }
-    
-    // If the host leaves, assign a new host
-    if (playerId === room.hostId && room.players.length > 1) {
-      // Find first player who isn't the leaving player
-      for (const player of room.players) {
-        if (player.id !== playerId) {
-          room.hostId = player.id;
-          break;
-        }
-      }
-    }
-    
-    // If game is in progress, mark player as disconnected
-    // Otherwise, remove them completely
-    if (room.status === 'playing') {
-      room.players[playerIndex].isConnected = false;
-      
-      // If it was their turn, move to next player
-      if (room.players[playerIndex].isCurrentTurn) {
-        room = nextTurn(room);
-      }
-    } else {
-      room.players.splice(playerIndex, 1);
-    }
-    
-    // If no players left, delete the room
-    if (room.players.length === 0 || room.players.every(p => !p.isConnected)) {
-      localStorage.removeItem(ROOM_STORAGE_KEY + '-' + room.id);
-      return { ...room, players: [] };
-    }
-    
-    saveRoom(room);
-    return room;
+export async function leaveRoom(room: GameRoom, playerId: string): Promise<GameRoom> {
+  // Remove player from room on server
+  const success = await roomStore.removePlayerFromRoom(room.id, playerId);
+  
+  if (!success) {
+    throw new Error('Failed to leave room');
   }
+  
+  // Get updated room from server (if it still exists)
+  const updatedRoom = await roomStore.getRoom(room.id);
+  
+  // If room was deleted, return empty room
+  return updatedRoom || { ...room, players: [] };
 }
 
 export function getActiveRooms(): GameRoom[] {
-  if (USE_IN_MEMORY_STORE) {
-    return roomStore.getActiveRooms();
-  } else {
-    const rooms: GameRoom[] = [];
-    
-    // Find all room keys
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(ROOM_STORAGE_KEY + '-')) {
-        try {
-          const room = JSON.parse(localStorage.getItem(key) || '');
-          // Only include rooms that are waiting or recently created (last 24 hours)
-          if (room && (room.status === 'waiting' || Date.now() - room.created < 24 * 60 * 60 * 1000)) {
-            rooms.push(room);
-          }
-        } catch (e) {
-          // Skip invalid room data
-        }
-      }
-    }
-    
-    // Sort by creation time, newest first
-    return rooms.sort((a, b) => b.created - a.created);
-  }
+  return roomStore.getActiveRooms();
 }
 
-export function nextTurn(room: GameRoom): GameRoom {
-  // Find next player with remaining shots
-  let nextPlayerIndex = room.currentPlayerIndex;
-  let nextPlayer: Player | undefined;
-  let fullLoopCount = 0;
+export async function nextTurn(room: GameRoom): Promise<GameRoom> {
+  // Advance to next turn on server
+  const success = await roomStore.nextTurn(room.id);
   
-  // Keep looking for the next player with shots remaining
-  do {
-    nextPlayerIndex = (nextPlayerIndex + 1) % room.players.length;
-    nextPlayer = room.players[nextPlayerIndex];
-    
-    // If we've gone through all players, increment our loop counter
-    if (nextPlayerIndex === 0) {
-      fullLoopCount++;
-    }
-    
-    // If we've gone through all players twice, the game is over
-    if (fullLoopCount > 1) {
-      room.status = 'completed';
-      saveRoom(room);
-      return room;
-    }
-  } while (nextPlayer.shotsRemaining <= 0);
-  
-  // Update current player
-  for (const player of room.players) {
-    player.isCurrentTurn = false;
+  if (!success) {
+    throw new Error('Failed to advance turn');
   }
   
-  nextPlayer.isCurrentTurn = true;
-  room.currentPlayerIndex = nextPlayerIndex;
+  // Get updated room from server
+  const updatedRoom = await roomStore.getRoom(room.id);
   
-  // Check if all shots have been used
-  const allShotsUsed = room.players.every(p => p.shotsRemaining <= 0);
-  if (allShotsUsed) {
-    room.status = 'completed';
+  if (!updatedRoom) {
+    throw new Error('Failed to get updated room');
   }
   
-  saveRoom(room);
-  return room;
+  return updatedRoom;
 }
 
-export function startGame(room: GameRoom): GameRoom {
+export async function startGame(room: GameRoom): Promise<GameRoom> {
+  // Input validation
   if (room.players.length < 2) {
     throw new Error('Need at least 2 players to start');
   }
   
-  room.status = 'playing';
-  room.currentPlayerIndex = 0;
-  room.players[0].isCurrentTurn = true;
+  // Start game on server
+  const success = await roomStore.startGame(room.id);
   
-  for (let i = 1; i < room.players.length; i++) {
-    room.players[i].isCurrentTurn = false;
+  if (!success) {
+    throw new Error('Failed to start game');
   }
   
-  saveRoom(room);
-  return room;
+  // Get updated room from server
+  const updatedRoom = await roomStore.getRoom(room.id);
+  
+  if (!updatedRoom) {
+    throw new Error('Failed to get updated room');
+  }
+  
+  return updatedRoom;
 }
 
-export function getWinner(room: GameRoom): Player | null {
+export async function getWinner(room: GameRoom): Promise<Player | null> {
   if (room.status !== 'completed') {
     return null;
   }
   
-  // Find player with highest score
-  let highestScore = -1;
-  let winner: Player | null = null;
-  
-  for (const player of room.players) {
-    if (player.score > highestScore) {
-      highestScore = player.score;
-      winner = player;
-    } else if (player.score === highestScore && highestScore > 0) {
-      // Handle tie - first player with that score wins
-      if (!winner) {
-        winner = player;
-      }
-    }
-  }
-  
-  return winner;
+  return roomStore.getWinner(room.id);
 }
 
-export function updatePlayerScore(
+export async function updatePlayerScore(
   room: GameRoom, 
   playerId: string, 
   score: number
-): GameRoom {
+): Promise<GameRoom> {
+  // Input validation
   const player = room.players.find(p => p.id === playerId);
   
   if (!player) {
@@ -271,34 +195,39 @@ export function updatePlayerScore(
     throw new Error('Not player\'s turn');
   }
   
-  player.score += score;
-  player.shotsRemaining--;
+  // Update score on server
+  const success = await roomStore.updatePlayerScore(room.id, playerId, score);
   
-  saveRoom(room);
-  return room;
-}
-
-export function resetPlayerScore(room: GameRoom): GameRoom {
-  for (const player of room.players) {
-    player.score = 0;
-    player.shotsRemaining = room.shotsPerPlayer;
+  if (!success) {
+    throw new Error('Failed to update score');
   }
   
-  room.status = 'waiting';
-  room.currentPlayerIndex = 0;
-  room.players[0].isCurrentTurn = true;
+  // Get updated room from server
+  const updatedRoom = await roomStore.getRoom(room.id);
   
-  for (let i = 1; i < room.players.length; i++) {
-    room.players[i].isCurrentTurn = false;
+  if (!updatedRoom) {
+    throw new Error('Failed to get updated room');
   }
   
-  saveRoom(room);
-  return room;
+  return updatedRoom;
 }
 
-// Initialize store when module is imported
-if (USE_IN_MEMORY_STORE) {
-  roomStore.initializeFromLocalStorage();
+export async function resetPlayerScore(room: GameRoom): Promise<GameRoom> {
+  // Reset game on server
+  const success = await roomStore.resetGame(room.id);
+  
+  if (!success) {
+    throw new Error('Failed to reset game');
+  }
+  
+  // Get updated room from server
+  const updatedRoom = await roomStore.getRoom(room.id);
+  
+  if (!updatedRoom) {
+    throw new Error('Failed to get updated room');
+  }
+  
+  return updatedRoom;
 }
 
 // URL parameter helper
@@ -309,3 +238,8 @@ export function checkForJoinParameter(): string | null {
   }
   return null;
 }
+
+// Cleanup room polling when user navigates away
+window.addEventListener('beforeunload', () => {
+  roomStore.cleanupRoomPolling();
+});

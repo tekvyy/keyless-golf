@@ -57,9 +57,18 @@
   }
   
   function updateLocalPlayerState() {
+    // Make sure room and players array are valid
+    if (!room || !room.players || !Array.isArray(room.players)) {
+      console.error('Invalid room data in updateLocalPlayerState', room);
+      return;
+    }
+    
     // Find our player
-    const player = room.players.find(p => p.id === playerId);
-    if (!player) return;
+    const player = room.players.find(p => p && p.id === playerId);
+    if (!player) {
+      console.warn('Player not found in room', playerId, room);
+      return;
+    }
     
     currentPlayer = player;
     isHost = room.hostId === playerId;
@@ -149,8 +158,11 @@
       try {
         const updatedRoom = getRoom(room.id);
         if (updatedRoom) {
-          room = updatedRoom;
-          updateLocalPlayerState();
+          // Make sure room data is valid, especially players array
+          if (updatedRoom && updatedRoom.players && Array.isArray(updatedRoom.players)) {
+            room = updatedRoom;
+            updateLocalPlayerState();
+          }
         }
       } catch (err) {
         console.error('Error polling room:', err);
@@ -183,19 +195,23 @@
     <div class="players-panel">
       <h3>Players</h3>
       <ul class="player-list">
-        {#each room.players as player}
-          <li class:current-player={player.isCurrentTurn} class:is-you={player.id === playerId}>
-            <div class="player-name">
-              {player.name} {player.id === playerId ? '(You)' : ''}
-              {player.id === room.hostId ? '👑' : ''}
-            </div>
-            <div class="player-score">Score: {player.score}</div>
-            <div class="player-shots">Shots left: {player.shotsRemaining}</div>
-            {#if !player.isConnected}
-              <div class="player-disconnected">Disconnected</div>
-            {/if}
-          </li>
-        {/each}
+        {#if room.players && Array.isArray(room.players)}
+          {#each room.players as player}
+            <li class:current-player={player.isCurrentTurn} class:is-you={player.id === playerId}>
+              <div class="player-name">
+                {player.name} {player.id === playerId ? '(You)' : ''}
+                {player.id === room.hostId ? '👑' : ''}
+              </div>
+              <div class="player-score">Score: {player.score}</div>
+              <div class="player-shots">Shots left: {player.shotsRemaining}</div>
+              {#if !player.isConnected}
+                <div class="player-disconnected">Disconnected</div>
+              {/if}
+            </li>
+          {/each}
+        {:else}
+          <li>Loading players...</li>
+        {/if}
       </ul>
       
       {#if room.status === 'waiting' && isHost}
@@ -299,12 +315,16 @@
                 </tr>
               </thead>
               <tbody>
-                {#each [...room.players].sort((a, b) => b.score - a.score) as player}
-                  <tr class:winner-row={winner && player.id === winner.id}>
-                    <td>{player.name} {player.id === playerId ? '(You)' : ''}</td>
-                    <td>{player.score}</td>
-                  </tr>
-                {/each}
+                {#if room.players && Array.isArray(room.players)}
+                  {#each [...room.players].sort((a, b) => b.score - a.score) as player}
+                    <tr class:winner-row={winner && player.id === winner.id}>
+                      <td>{player.name} {player.id === playerId ? '(You)' : ''}</td>
+                      <td>{player.score}</td>
+                    </tr>
+                  {/each}
+                {:else}
+                  <tr><td colspan="2">Loading scores...</td></tr>
+                {/if}
               </tbody>
             </table>
           </div>
