@@ -4,7 +4,7 @@
   import Room from './lib/Room.svelte';
   import PasskeyGolf from './PasskeyGolf.svelte';
   import type { GameRoom } from './lib/gameTypes';
-  import { LOCAL_PLAYER_ID_KEY } from './lib/gameTypes';
+  import { LOCAL_PLAYER_ID_KEY } from './lib/roomInterface';
   
   export let walletConnected: boolean = false;
   export let contractId: string = '';

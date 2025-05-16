@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   import { native, server } from './common';
   import type { GameRoom, Player } from './gameTypes';
-  import { createNewRoom, generatePlayerId, getActiveRooms, getRoom, joinRoom, LOCAL_PLAYER_ID_KEY, checkForJoinParameter } from './gameTypes';
+  import { createNewRoom, generatePlayerId, getActiveRooms, getRoom, joinRoom, LOCAL_PLAYER_ID_KEY, checkForJoinParameter } from './roomInterface';
   
   export let walletConnected = false;
   export let contractId = '';

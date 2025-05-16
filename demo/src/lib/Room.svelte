@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { native, server, account } from './common';
   import type { GameRoom, Player } from './gameTypes';
-  import { getRoom, leaveRoom, nextTurn, resetPlayerScore, startGame, updatePlayerScore, getWinner, saveRoom } from './gameTypes';
+  import { getRoom, leaveRoom, nextTurn, resetPlayerScore, startGame, updatePlayerScore, getWinner, saveRoom } from './roomInterface';
   import ShareRoomLink from './ShareRoomLink.svelte';
   
   export let room: GameRoom;
@@ -140,10 +140,11 @@
     }
   }
   
-  // Poll for room updates
+  // Poll for room updates - using in-memory store reduces need for polling
   function pollRoomUpdates() {
     if (gameRoomPollingInterval) return;
     
+    // With in-memory store, we can poll less frequently, mainly as a backup
     gameRoomPollingInterval = window.setInterval(() => {
       try {
         const updatedRoom = getRoom(room.id);
@@ -154,7 +155,7 @@
       } catch (err) {
         console.error('Error polling room:', err);
       }
-    }, 2000);
+    }, 5000); // Reduced polling frequency since we now have in-memory store
   }
   
   onMount(() => {

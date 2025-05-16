@@ -11,6 +11,7 @@
 	import { Keypair } from "@stellar/stellar-sdk/minimal";
     import { SignerStore, SignerKey, type SignerLimits, type Signer } from "passkey-kit";
     import Game from "./Game.svelte";
+    import AuthPage from "./AuthPage.svelte";
 
 	// TODO need to support two toggles:
 	// - between temp and persistent
@@ -33,11 +34,21 @@
 
 	let keyName: string = "";
     let showGame = false;
+    let showAuth = true;  // Show auth page by default
 
-	if (localStorage.hasOwnProperty("sp:keyId")) {
-		keyId = localStorage.getItem("sp:keyId")!;
-		connect(keyId);
-	}
+	// Try to auto-connect when the component is loaded
+	(async () => {
+		if (localStorage.hasOwnProperty("sp:keyId")) {
+			keyId = localStorage.getItem("sp:keyId")!;
+			try {
+				await connect(keyId);
+			} catch (error) {
+				console.error("Auto-connect failed:", error);
+				// If auto-connect fails, show auth page
+				showAuth = true;
+			}
+		}
+	})();
 
 	async function register() {
 		const user = prompt("Give this passkey a name");
@@ -85,12 +96,54 @@
 
 			await getWalletBalance();
 			await getWalletSigners();
+			
+			showAuth = false;  // Hide auth page after successful connection
+			return true; // Connection successful
 		} catch (err: any) {
-			console.error(err);
-			// alert(err.message)
+			console.error("Connection error:", err);
+			// Re-throw the error so caller can handle it
+			throw err;
 		}
 	}
 	async function reset() {
+		localStorage.removeItem("sp:keyId");
+		location.reload();
+	}
+	
+	async function handleRegister(cid?: string) {
+		// Set contract ID if received from AuthPage
+		if (cid) {
+			contractId = cid;
+			// Get wallet balance and signers
+			await getWalletBalance();
+			await getWalletSigners();
+		}
+		// Otherwise try to connect using localStorage
+		else if (localStorage.hasOwnProperty("sp:keyId")) {
+			keyId = localStorage.getItem("sp:keyId")!;
+			await connect(keyId);
+		}
+		showAuth = false;  // Hide auth page
+	}
+	
+	async function handleSignIn(cid?: string) {
+		// Set contract ID if received from AuthPage
+		if (cid) {
+			contractId = cid;
+			// Get wallet balance and signers
+			await getWalletBalance();
+			await getWalletSigners();
+		}
+		// Otherwise try to connect using localStorage
+		else if (localStorage.hasOwnProperty("sp:keyId")) {
+			keyId = localStorage.getItem("sp:keyId")!;
+			await connect(keyId);
+		}
+		showAuth = false;  // Hide auth page
+	}
+	
+	function handleReset() {
+		// The reset function will handle the actual reset
 		localStorage.removeItem("sp:keyId");
 		location.reload();
 	}
@@ -340,7 +393,13 @@
 	}
 </script>
 
-{#if showGame}
+{#if showAuth}
+    <AuthPage 
+        onRegister={handleRegister}
+        onSignIn={handleSignIn}
+        onReset={handleReset}
+    />
+{:else if showGame}
     <Game 
         walletConnected={!!contractId} 
         contractId={contractId || ""} 
@@ -348,127 +407,283 @@
     />
 {:else}
 <main>
-	<button on:click={register}>Register</button>
-	<button on:click={() => connect()}>Sign In</button>
-	<button on:click={reset}>Reset</button>
+    <header class="game-header">
+        <h1>Passkey Golf</h1>
+        <button on:click={goToGame} class="play-button">Play Game!</button>
+    </header>
 
 	{#if contractId}
-		<p>{contractId}</p>
+		<div class="wallet-info">
+            <h2>Your Wallet</h2>
+            <p class="wallet-id">ID: {contractId}</p>
 
-		{#if balance}
-			<p>{parseFloat((Number(balance) / 10_000_000).toFixed(7))} XLM</p>
-		{/if}
+            {#if balance}
+                <p class="wallet-balance">Balance: {parseFloat((Number(balance) / 10_000_000).toFixed(7))} XLM</p>
+            {/if}
 
-		<button on:click={fundWallet}>Add Funds</button>
-		<button on:click={getWalletBalance}>Get Balance</button>
-		<br />
-		<button on:click={addEd25519Signer}>Add Ed25519 Signer</button>
-		<button on:click={ed25519Transfer}>Ed25519 Transfer</button>
-		<br />
-		<button on:click={addPolicySigner}>Add Policy Signer</button>
-		<button on:click={policyTransfer}>Policy Transfer</button>
-		<br />
-		<button on:click={multisigTransfer}>Multisig Transfer</button>
-		<br />
-		<button on:click={goToGame} style="margin-top: 20px; background-color: #ff8c00; font-weight: bold;">Play Passkey Golf!</button>
+            <div class="button-group">
+                <button on:click={fundWallet} class="wallet-action">Add Funds</button>
+                <button on:click={getWalletBalance} class="wallet-action">Get Balance</button>
+            </div>
+        </div>
 
-		<form on:submit|preventDefault>
-			<ul style="list-style: none; padding: 0;">
-				<li>
-					<input
-						type="text"
-						placeholder="Signer name"
-						bind:value={keyName}
-					/>
-				</li>
-				<li>
-					<button on:click={() => addSigner()}>Add Signer</button>
-				</li>
-			</ul>
-		</form>
-	{/if}
+        <div class="signers-section">
+            <h2>Manage Signers</h2>
+            <div class="button-group">
+                <button on:click={addEd25519Signer} class="signer-action">Add Ed25519 Signer</button>
+                <button on:click={ed25519Transfer} class="signer-action">Ed25519 Transfer</button>
+                <button on:click={addPolicySigner} class="signer-action">Add Policy Signer</button>
+                <button on:click={policyTransfer} class="signer-action">Policy Transfer</button>
+                <button on:click={multisigTransfer} class="signer-action">Multisig Transfer</button>
+            </div>
 
-	<ul>
-		{#each signers as { kind, key, val, expiration, limits, evicted }}
-			<li>
-				<button disabled>
-					{#if adminSigner === key}
-						{#if keyId === key}◉{:else}◎{/if}&nbsp;
-					{:else if keyId === key}
-						●&nbsp;
-					{/if}
-					{#if limits === ADMIN_KEY}
-						ADMIN
-					{:else}
-						SESSION
-					{/if}
-				</button>
+            <form on:submit|preventDefault class="add-signer-form">
+                <input
+                    type="text"
+                    placeholder="Signer name"
+                    bind:value={keyName}
+                />
+                <button on:click={() => addSigner()} class="add-btn">Add Signer</button>
+            </form>
+        </div>
 
-				{key}
+        <div class="signers-list">
+            <h3>Your Signers</h3>
+            <ul>
+                {#each signers as { kind, key, val, expiration, limits, evicted }}
+                    <li>
+                        <div class="signer-badge">
+                            {#if adminSigner === key}
+                                {#if keyId === key}◉{:else}◎{/if}&nbsp;
+                            {:else if keyId === key}
+                                ●&nbsp;
+                            {/if}
+                            {#if limits === ADMIN_KEY}
+                                ADMIN
+                            {:else}
+                                SESSION
+                            {/if}
+                        </div>
 
-				<button on:click={() => walletTransfer(key, kind)}
-					>Transfer 1 XLM</button
-				>
+                        <span class="signer-key">{key}</span>
 
-				<!-- TODO rethink {#if (limits !== ADMIN_KEY || admins > 1) && key !== keyId} -->
-				<button on:click={() => removeSigner(key, kind)}>Remove</button>
-				<!-- {/if} -->
-			</li>
-		{/each}
-	</ul>
+                        <div class="signer-actions">
+                            <button on:click={() => walletTransfer(key, kind)} class="transfer-btn">
+                                Transfer 1 XLM
+                            </button>
+                            <button on:click={() => removeSigner(key, kind)} class="remove-btn">
+                                Remove
+                            </button>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+	{:else}
+        <div class="no-wallet">
+            <p>No wallet connected. Please register or sign in.</p>
+            <div class="button-group">
+                <button on:click={() => showAuth = true} class="auth-btn">Register/Sign In</button>
+            </div>
+        </div>
+    {/if}
 </main>
 {/if}
 
 <style>
-	main {
-		padding: 20px;
-		max-width: 1000px;
-		margin: 0 auto;
-		background-color: white;
-		border-radius: 8px;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-	}
-	
-	button {
-		margin: 5px;
-		padding: 8px 12px;
-		border: none;
-		border-radius: 4px;
-		background-color: #3498db;
-		color: white;
-		cursor: pointer;
-		font-weight: 500;
-	}
-	
-	button:hover {
-		background-color: #2980b9;
-	}
-	
-	ul {
-		padding: 0;
-		list-style-type: none;
-	}
-	
-	li {
-		margin-bottom: 10px;
-		padding: 10px;
-		border: 1px solid #eee;
-		border-radius: 4px;
-		background-color: #f9f9f9;
-		color: #333;
-	}
-	
-	input {
-		padding: 8px;
-		margin: 5px 0;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		width: 100%;
-		background-color: white;
-		color: #333;
-	}
-	
-	p {
-		color: #333;
-	}
+    main {
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #3498db;
+    }
+    
+    .game-header h1 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 2rem;
+    }
+    
+    .play-button {
+        background-color: #ff8c00;
+        color: white;
+        font-weight: bold;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .play-button:hover {
+        background-color: #e67e00;
+        transform: translateY(-2px);
+    }
+    
+    .wallet-info, .signers-section, .signers-list, .no-wallet {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .wallet-info h2, .signers-section h2, .signers-list h3 {
+        margin-top: 0;
+        color: #2c3e50;
+    }
+    
+    .wallet-id, .wallet-balance {
+        font-family: monospace;
+        background-color: #f0f0f0;
+        padding: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 15px 0;
+    }
+    
+    button {
+        padding: 8px 12px;
+        margin: 5px;
+        border: none;
+        border-radius: 4px;
+        background-color: #3498db;
+        color: white;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    button:hover {
+        background-color: #2980b9;
+    }
+    
+    .wallet-action {
+        background-color: #3498db;
+    }
+    
+    .signer-action {
+        background-color: #9b59b6;
+    }
+    
+    .add-signer-form {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    input {
+        padding: 8px;
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        color: #333;
+    }
+    
+    .add-btn {
+        background-color: #2ecc71;
+    }
+    
+    .signers-list ul {
+        padding: 0;
+        list-style-type: none;
+    }
+    
+    .signers-list li {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        background-color: white;
+    }
+    
+    .signer-badge {
+        background-color: #95a5a6;
+        color: white;
+        padding: 5px 8px;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .signer-key {
+        flex: 1;
+        font-family: monospace;
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 10px;
+    }
+    
+    .signer-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .transfer-btn {
+        background-color: #f39c12;
+    }
+    
+    .remove-btn {
+        background-color: #e74c3c;
+    }
+    
+    .no-wallet {
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .auth-btn {
+        background-color: #3498db;
+        font-size: 1rem;
+        padding: 10px 20px;
+    }
+    
+    p {
+        color: #333;
+    }
+    
+    @media (max-width: 768px) {
+        .game-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .signers-list li {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .signer-key {
+            margin: 10px 0;
+        }
+        
+        .signer-actions {
+            width: 100%;
+        }
+    }
 </style>
